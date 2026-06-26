@@ -16,6 +16,8 @@ namespace NetworkMonitoringWF.Forms
         public KullaniciYonetimForm()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
         }
 

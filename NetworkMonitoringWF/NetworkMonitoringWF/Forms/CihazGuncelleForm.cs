@@ -17,6 +17,8 @@ namespace NetworkMonitoringWF
         public CihazGuncelleForm()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
         }
 
         public CihazGuncelleForm(
@@ -28,6 +30,8 @@ namespace NetworkMonitoringWF
             int? vlanId)
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
 
             this.StartPosition = FormStartPosition.CenterScreen;
 

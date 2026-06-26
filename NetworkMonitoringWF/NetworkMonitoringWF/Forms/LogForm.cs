@@ -13,6 +13,8 @@ namespace NetworkMonitoringWF
         public LogForm()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
         }
 

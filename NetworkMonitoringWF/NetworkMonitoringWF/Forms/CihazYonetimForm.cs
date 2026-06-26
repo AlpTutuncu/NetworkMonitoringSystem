@@ -1,16 +1,12 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using NetworkMonitoringWF.Models;
-
 
 namespace NetworkMonitoringWF
 {
@@ -21,53 +17,111 @@ namespace NetworkMonitoringWF
         public CihazYonetimForm(string rol)
         {
             InitializeComponent();
+
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.StartPosition = FormStartPosition.CenterScreen;
+
             kullaniciRol = rol;
+
+            // Yeni DataGridView / PoisonDataGridView eklendiğinde event kopmasın diye garanti bağlıyoruz.
+            dataGridView1.CellContentClick -= dataGridView1_CellContentClick;
+            dataGridView1.CellContentClick += dataGridView1_CellContentClick;
         }
+
         private async void CihazYonetimForm_Load(object sender, EventArgs e)
         {
             await CihazListele();
-            if (kullaniciRol == "Personel")
-            {
-                btnCihazEkle.Enabled = false;
-
-                if (dataGridView1.Columns.Contains("Guncelle"))
-                    dataGridView1.Columns["Guncelle"].Visible = false;
-
-                if (dataGridView1.Columns.Contains("Sil"))
-                    dataGridView1.Columns["Sil"].Visible = false;
-            }
+            btnCihazEkle.BackColor = ColorTranslator.FromHtml("#97de8c");
+            btnCihazEkle.ForeColor = ColorTranslator.FromHtml("#000000");
+            btnCihazEkle.FlatStyle = FlatStyle.Flat;
+            btnCihazEkle.FlatAppearance.BorderSize = 1;
         }
 
         private async Task CihazListele()
         {
-            HttpClient client = new HttpClient();
+            try
+            {
+                HttpClient client = new HttpClient();
 
-            string json = await client.GetStringAsync(
-                "https://localhost:7181/api/Cihaz/CihazListele");
+                string json = await client.GetStringAsync(
+                    "https://localhost:7181/api/Cihaz/CihazListele");
 
-            List<CihazModel> cihazlar =
-                JsonConvert.DeserializeObject<List<CihazModel>>(json);
+                List<CihazModel> cihazlar =
+                    JsonConvert.DeserializeObject<List<CihazModel>>(json);
 
+                GridiDoldur(cihazlar);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Cihazlar listelenemedi: " + ex.Message);
+            }
+        }
+
+        private void GridiDoldur(List<CihazModel> cihazlar)
+        {
+            dataGridView1.DataSource = null;
             dataGridView1.DataSource = cihazlar;
 
-            dataGridView1.Columns["VlanBilgi"].HeaderText = "VLAN";
-            dataGridView1.Columns["CihazAdi"].HeaderText = "Cihaz Adı";
-            dataGridView1.Columns["IPAdresi"].HeaderText = "IP Adresi";
-            dataGridView1.Columns["CihazTipi"].HeaderText = "Cihaz Tipi";
-            dataGridView1.Columns["VlanId"].Visible = false;
+            GridGenelAyarlar();
+            KolonBasliklariniAyarla();
+            ButonKolonlariEkle();
+            KolonSirasiAyarla();
+            ButonRenkleriniAyarla();
+            RolYetkileriniUygula();
+        }
 
+        private void GridGenelAyarlar()
+        {
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.AllowUserToAddRows = false;
-
-            ButonKolonlariEkle();
+            dataGridView1.ReadOnly = true;
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridView1.MultiSelect = false;
 
             dataGridView1.EnableHeadersVisualStyles = false;
 
-            dataGridView1.Columns["Ping"].DefaultCellStyle.BackColor = Color.LightGreen;
+            dataGridView1.ColumnHeadersHeightSizeMode =
+                DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
-            dataGridView1.Columns["Guncelle"].DefaultCellStyle.BackColor = Color.LightBlue;
+            dataGridView1.ColumnHeadersHeight = 45;
 
-            dataGridView1.Columns["Sil"].DefaultCellStyle.BackColor = Color.LightCoral;
+            dataGridView1.RowTemplate.Height = 38;
+
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                row.Height = 38;
+            }
+        }
+
+        private void KolonBasliklariniAyarla()
+        {
+            if (dataGridView1.Columns.Contains("Id"))
+            {
+                dataGridView1.Columns["Id"].Visible = true;
+                dataGridView1.Columns["Id"].HeaderText = "ID";
+            }
+
+            if (dataGridView1.Columns.Contains("VlanId"))
+                dataGridView1.Columns["VlanId"].Visible = false;
+
+            if (dataGridView1.Columns.Contains("CihazAdi"))
+                dataGridView1.Columns["CihazAdi"].HeaderText = "Cihaz Adı";
+
+            if (dataGridView1.Columns.Contains("IPAdresi"))
+                dataGridView1.Columns["IPAdresi"].HeaderText = "IP Adresi";
+
+            if (dataGridView1.Columns.Contains("CihazTipi"))
+                dataGridView1.Columns["CihazTipi"].HeaderText = "Cihaz Tipi";
+
+            if (dataGridView1.Columns.Contains("Konum"))
+                dataGridView1.Columns["Konum"].HeaderText = "Konum";
+
+            if (dataGridView1.Columns.Contains("Durum"))
+                dataGridView1.Columns["Durum"].HeaderText = "Durum";
+
+            if (dataGridView1.Columns.Contains("VlanBilgi"))
+                dataGridView1.Columns["VlanBilgi"].HeaderText = "VLAN";
         }
 
         private void ButonKolonlariEkle()
@@ -77,9 +131,7 @@ namespace NetworkMonitoringWF
                 DataGridViewButtonColumn pingBtn = new DataGridViewButtonColumn();
 
                 pingBtn.FlatStyle = FlatStyle.Flat;
-                pingBtn.DefaultCellStyle.BackColor = Color.LightGreen;
                 pingBtn.DefaultCellStyle.ForeColor = Color.Black;
-
                 pingBtn.Name = "Ping";
                 pingBtn.HeaderText = "Ping";
                 pingBtn.Text = "Ping At";
@@ -93,13 +145,12 @@ namespace NetworkMonitoringWF
                 DataGridViewButtonColumn guncelleBtn = new DataGridViewButtonColumn();
 
                 guncelleBtn.FlatStyle = FlatStyle.Flat;
-                guncelleBtn.DefaultCellStyle.BackColor = Color.LightBlue;
                 guncelleBtn.DefaultCellStyle.ForeColor = Color.Black;
-
                 guncelleBtn.Name = "Guncelle";
                 guncelleBtn.HeaderText = "Güncelle";
                 guncelleBtn.Text = "Güncelle";
                 guncelleBtn.UseColumnTextForButtonValue = true;
+
                 dataGridView1.Columns.Add(guncelleBtn);
             }
 
@@ -108,14 +159,93 @@ namespace NetworkMonitoringWF
                 DataGridViewButtonColumn silBtn = new DataGridViewButtonColumn();
 
                 silBtn.FlatStyle = FlatStyle.Flat;
-                silBtn.DefaultCellStyle.BackColor = Color.LightCoral;
                 silBtn.DefaultCellStyle.ForeColor = Color.Black;
-
                 silBtn.Name = "Sil";
                 silBtn.HeaderText = "Sil";
                 silBtn.Text = "Sil";
                 silBtn.UseColumnTextForButtonValue = true;
+
                 dataGridView1.Columns.Add(silBtn);
+            }
+        }
+
+        private void KolonSirasiAyarla()
+        {
+            int index = 0;
+
+            if (dataGridView1.Columns.Contains("Id"))
+                dataGridView1.Columns["Id"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("CihazAdi"))
+                dataGridView1.Columns["CihazAdi"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("IPAdresi"))
+                dataGridView1.Columns["IPAdresi"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("CihazTipi"))
+                dataGridView1.Columns["CihazTipi"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("Konum"))
+                dataGridView1.Columns["Konum"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("Durum"))
+                dataGridView1.Columns["Durum"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("VlanBilgi"))
+                dataGridView1.Columns["VlanBilgi"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("Ping"))
+                dataGridView1.Columns["Ping"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("Guncelle"))
+                dataGridView1.Columns["Guncelle"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("Sil"))
+                dataGridView1.Columns["Sil"].DisplayIndex = index++;
+        }
+
+        private void ButonRenkleriniAyarla()
+        {
+            //if (dataGridView1.Columns.Contains("Ping"))
+            //{
+            //    dataGridView1.Columns["Ping"].DefaultCellStyle.BackColor = Color.LightGreen;
+            //    dataGridView1.Columns["Ping"].DefaultCellStyle.ForeColor = Color.Black;
+            //}
+
+            if (dataGridView1.Columns.Contains("Guncelle"))
+            {
+                dataGridView1.Columns["Guncelle"].DefaultCellStyle.BackColor = Color.LightBlue;
+                dataGridView1.Columns["Guncelle"].DefaultCellStyle.ForeColor = Color.Black;
+            }
+
+            if (dataGridView1.Columns.Contains("Sil"))
+            {
+                dataGridView1.Columns["Sil"].DefaultCellStyle.BackColor = Color.LightCoral;
+                dataGridView1.Columns["Sil"].DefaultCellStyle.ForeColor = Color.Black;
+            }
+        }
+
+        private void RolYetkileriniUygula()
+        {
+            if (kullaniciRol == "Personel")
+            {
+                btnCihazEkle.Enabled = false;
+
+                if (dataGridView1.Columns.Contains("Guncelle"))
+                    dataGridView1.Columns["Guncelle"].Visible = false;
+
+                if (dataGridView1.Columns.Contains("Sil"))
+                    dataGridView1.Columns["Sil"].Visible = false;
+            }
+            else
+            {
+                btnCihazEkle.Enabled = true;
+
+                if (dataGridView1.Columns.Contains("Guncelle"))
+                    dataGridView1.Columns["Guncelle"].Visible = true;
+
+                if (dataGridView1.Columns.Contains("Sil"))
+                    dataGridView1.Columns["Sil"].Visible = true;
             }
         }
 
@@ -126,10 +256,12 @@ namespace NetworkMonitoringWF
 
         private async void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0)
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
                 return;
 
-            if (dataGridView1.Columns[e.ColumnIndex].Name == "Ping")
+            string kolonAdi = dataGridView1.Columns[e.ColumnIndex].Name;
+
+            if (kolonAdi == "Ping")
             {
                 int id = Convert.ToInt32(
                     dataGridView1.Rows[e.RowIndex].Cells["Id"].Value);
@@ -163,10 +295,13 @@ namespace NetworkMonitoringWF
                 }
             }
 
-            if (dataGridView1.Columns[e.ColumnIndex].Name == "Sil")
+            if (kolonAdi == "Sil")
             {
-                int id = Convert.ToInt32(dataGridView1.Rows[e.RowIndex].Cells["Id"].Value);
-                string cihazAdi = dataGridView1.Rows[e.RowIndex].Cells["CihazAdi"].Value.ToString();
+                int id = Convert.ToInt32(
+                    dataGridView1.Rows[e.RowIndex].Cells["Id"].Value);
+
+                string cihazAdi =
+                    dataGridView1.Rows[e.RowIndex].Cells["CihazAdi"].Value.ToString();
 
                 DialogResult cevap = MessageBox.Show(
                     cihazAdi + " cihazını silmek istiyor musunuz?",
@@ -179,7 +314,8 @@ namespace NetworkMonitoringWF
                     HttpClient client = new HttpClient();
 
                     HttpResponseMessage response =
-                        await client.DeleteAsync("https://localhost:7181/api/Cihaz/CihazSil/" + id);
+                        await client.DeleteAsync(
+                            "https://localhost:7181/api/Cihaz/CihazSil/" + id);
 
                     if (response.IsSuccessStatusCode)
                     {
@@ -188,24 +324,37 @@ namespace NetworkMonitoringWF
                     }
                     else
                     {
-                        MessageBox.Show("Cihaz silinemedi.");
+                        string hata = await response.Content.ReadAsStringAsync();
+                        MessageBox.Show("Cihaz silinemedi: " + hata);
                     }
                 }
             }
 
-            if (dataGridView1.Columns[e.ColumnIndex].Name == "Guncelle")
+            if (kolonAdi == "Guncelle")
             {
-                int id = Convert.ToInt32(dataGridView1.Rows[e.RowIndex].Cells["Id"].Value);
-                string cihazAdi = dataGridView1.Rows[e.RowIndex].Cells["CihazAdi"].Value.ToString();
-                string ipAdresi = dataGridView1.Rows[e.RowIndex].Cells["IPAdresi"].Value.ToString();
-                string cihazTipi = dataGridView1.Rows[e.RowIndex].Cells["CihazTipi"].Value.ToString();
-                string konum = dataGridView1.Rows[e.RowIndex].Cells["Konum"].Value.ToString();
+                int id = Convert.ToInt32(
+                    dataGridView1.Rows[e.RowIndex].Cells["Id"].Value);
+
+                string cihazAdi =
+                    dataGridView1.Rows[e.RowIndex].Cells["CihazAdi"].Value.ToString();
+
+                string ipAdresi =
+                    dataGridView1.Rows[e.RowIndex].Cells["IPAdresi"].Value.ToString();
+
+                string cihazTipi =
+                    dataGridView1.Rows[e.RowIndex].Cells["CihazTipi"].Value.ToString();
+
+                string konum =
+                    dataGridView1.Rows[e.RowIndex].Cells["Konum"].Value.ToString();
 
                 int? vlanId = null;
 
-                object vlanObj = dataGridView1.Rows[e.RowIndex].Cells["VlanId"].Value;
+                object vlanObj =
+                    dataGridView1.Rows[e.RowIndex].Cells["VlanId"].Value;
 
-                if (vlanObj != null && vlanObj != DBNull.Value && vlanObj.ToString() != "")
+                if (vlanObj != null &&
+                    vlanObj != DBNull.Value &&
+                    vlanObj.ToString() != "")
                 {
                     vlanId = Convert.ToInt32(vlanObj);
                 }
@@ -242,20 +391,22 @@ namespace NetworkMonitoringWF
                 return;
             }
 
-            HttpClient client = new HttpClient();
+            try
+            {
+                HttpClient client = new HttpClient();
 
-            string json = await client.GetStringAsync(
-                "https://localhost:7181/api/Cihaz/CihazAra/" + kelime);
+                string json = await client.GetStringAsync(
+                    "https://localhost:7181/api/Cihaz/CihazAra/" + kelime);
 
-            List<CihazModel> cihazlar =
-                JsonConvert.DeserializeObject<List<CihazModel>>(json);
+                List<CihazModel> cihazlar =
+                    JsonConvert.DeserializeObject<List<CihazModel>>(json);
 
-            dataGridView1.DataSource = cihazlar;
-
-            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridView1.AllowUserToAddRows = false;
-
-            ButonKolonlariEkle();
+                GridiDoldur(cihazlar);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Arama işlemi başarısız: " + ex.Message);
+            }
         }
 
         private async void btnTemizle_Click(object sender, EventArgs e)
@@ -264,5 +415,4 @@ namespace NetworkMonitoringWF
             await CihazListele();
         }
     }
-
 }

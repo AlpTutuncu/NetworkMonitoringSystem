@@ -18,12 +18,24 @@ namespace NetworkMonitoringWF
         public LoginForm()
         {
             InitializeComponent();
-            this.AcceptButton = btnGiris;
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            txtKullaniciAdi.KeyDown += LoginEnter_KeyDown;
+            txtSifre.KeyDown += LoginEnter_KeyDown;
         }
 
         private void LoginForm_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void LoginEnter_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                btnGiris_Click(btnGiris, EventArgs.Empty);
+                e.SuppressKeyPress = true;
+            }
         }
 
         private async void btnGiris_Click(object sender, EventArgs e)

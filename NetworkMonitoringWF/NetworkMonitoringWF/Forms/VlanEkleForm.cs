@@ -12,6 +12,8 @@ namespace NetworkMonitoringWF.Forms
         public VlanEkleForm()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
         }
 

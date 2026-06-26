@@ -13,6 +13,9 @@ namespace NetworkMonitoringWF
         public CihazEkleForm()
         {
             InitializeComponent();
+
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
         }
 

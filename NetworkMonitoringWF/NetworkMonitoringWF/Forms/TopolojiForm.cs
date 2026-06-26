@@ -20,17 +20,40 @@ namespace NetworkMonitoringWF.Forms
         private bool surukleniyor = false;
         private TopolojiNodeModel sagTiklananNode = null;
         private TopolojiNodeModel baglantiBaslatilanNode = null;
+        private string kullaniciRol;
 
         public TopolojiForm()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+
+            kullaniciRol = "Admin";
+
             this.StartPosition = FormStartPosition.CenterScreen;
+
             panelTopoloji.MouseMove += panelTopoloji_MouseMove;
             panelTopoloji.MouseDown += panelTopoloji_MouseDown;
             panelTopoloji.MouseMove += panelTopoloji_MouseMove_Drag;
             panelTopoloji.MouseUp += panelTopoloji_MouseUp;
             panelTopoloji.MouseClick += panelTopoloji_MouseClick;
-            
+        }
+
+        public TopolojiForm(string rol)
+        {
+            InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+
+            kullaniciRol = rol;
+
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            panelTopoloji.MouseMove += panelTopoloji_MouseMove;
+            panelTopoloji.MouseDown += panelTopoloji_MouseDown;
+            panelTopoloji.MouseMove += panelTopoloji_MouseMove_Drag;
+            panelTopoloji.MouseUp += panelTopoloji_MouseUp;
+            panelTopoloji.MouseClick += panelTopoloji_MouseClick;
         }
 
         private void panelTopoloji_MouseClick(object sender, MouseEventArgs e)
@@ -57,12 +80,20 @@ namespace NetworkMonitoringWF.Forms
                 }
             }
         }
-        
+
 
         private void panelTopoloji_MouseDown(object sender, MouseEventArgs e)
         {
             if (topoloji == null)
                 return;
+
+            // Sürükleme sadece Admin + Sol tık ile başlasın
+            if (kullaniciRol != "Admin" || e.Button != MouseButtons.Left)
+            {
+                surukleniyor = false;
+                seciliNode = null;
+                return;
+            }
 
             foreach (var node in topoloji.Nodes)
             {
@@ -83,6 +114,9 @@ namespace NetworkMonitoringWF.Forms
 
         private void panelTopoloji_MouseMove_Drag(object sender, MouseEventArgs e)
         {
+            if (kullaniciRol != "Admin")
+                return;
+
             if (!surukleniyor || seciliNode == null)
                 return;
 
@@ -160,10 +194,35 @@ namespace NetworkMonitoringWF.Forms
             nodeToolTip.SetToolTip(panelTopoloji, "");
         }
 
+        private void RolYetkileriniUygula()
+        {
+            if (kullaniciRol == "Admin")
+            {
+                tsmPing.Visible = true;
+                tsmDetay.Visible = true;
+                tsmGuncelle.Visible = true;
+                tsmSil.Visible = true;
+                tsmBaglantiBaslat.Visible = true;
+                tsmBaglantiSil.Visible = true;
+            }
+            else if (kullaniciRol == "Personel")
+            {
+                tsmPing.Visible = true;
+                tsmDetay.Visible = true;
+
+                tsmGuncelle.Visible = false;
+                tsmSil.Visible = false;
+                tsmBaglantiBaslat.Visible = false;
+                tsmBaglantiSil.Visible = false;
+            }
+        }
+
         private async void TopolojiForm_Load(object sender, EventArgs e)
         {
+            RolYetkileriniUygula();
             cmbKonum.SelectedIndex = 0;
             await TopolojiGetir();
+           
         }
 
         private async void tsmPing_Click(object sender, EventArgs e)

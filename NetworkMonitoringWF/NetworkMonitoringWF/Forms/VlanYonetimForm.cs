@@ -13,13 +13,43 @@ namespace NetworkMonitoringWF.Forms
     {
         private List<VlanModel> vlanListesi = new List<VlanModel>();
         private VlanModel seciliVlan = null;
+        private string kullaniciRol;
+
+        public VlanYonetimForm(string rol)
+        {
+            InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.Text = "VLAN Yönetimi";
+            kullaniciRol = rol;
+        }
 
         public VlanYonetimForm()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
 
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.Text = "VLAN Yönetimi";
+            kullaniciRol = "Admin";
+        }
+
+        private void RolYetkileriniUygula()
+        {
+            if (kullaniciRol == "Admin")
+            {
+                btnEkle.Enabled = true;
+                btnGuncelle.Enabled = true;
+                btnSil.Enabled = true;
+            }
+            else if (kullaniciRol == "Personel")
+            {
+                btnEkle.Enabled = false;
+                btnGuncelle.Enabled = false;
+                btnSil.Enabled = false;
+            }
         }
 
         private void ButonStili(Button btn, Color arkaplan, Color yazi)
@@ -45,6 +75,7 @@ namespace NetworkMonitoringWF.Forms
 
         private async void VlanYonetimForm_Load(object sender, EventArgs e)
         {
+            RolYetkileriniUygula();
             cmbKonum.Items.Clear();
 
             cmbKonum.Items.Add("İzmir Ofis");

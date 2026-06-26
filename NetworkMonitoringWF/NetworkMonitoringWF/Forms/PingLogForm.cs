@@ -13,6 +13,8 @@ namespace NetworkMonitoringWF.Forms
         public PingLogForm()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
         }
 

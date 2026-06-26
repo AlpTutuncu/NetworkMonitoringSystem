@@ -15,6 +15,8 @@ namespace NetworkMonitoringWF.Forms
         public VlanGuncelleForm(VlanModel vlan)
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
 
             this.StartPosition = FormStartPosition.CenterScreen;
             seciliVlan = vlan;

@@ -17,6 +17,8 @@ namespace NetworkMonitoringWF.Forms
         public DashboardForm()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
         }
 
