@@ -120,8 +120,21 @@ namespace NetworkMonitoringWF.Forms
             if (!surukleniyor || seciliNode == null)
                 return;
 
-            seciliNode.PosX = e.X;
-            seciliNode.PosY = e.Y;
+            int nodeYarimGenislik = 60;
+            int nodeYarimYukseklik = 40;
+
+            float yeniX = Sinirla(
+                e.X,
+                nodeYarimGenislik,
+                panelTopoloji.Width - nodeYarimGenislik);
+
+            float yeniY = Sinirla(
+                e.Y,
+                nodeYarimYukseklik,
+                panelTopoloji.Height - nodeYarimYukseklik);
+
+            seciliNode.PosX = yeniX;
+            seciliNode.PosY = yeniY;
 
             panelTopoloji.Invalidate();
         }
@@ -225,6 +238,45 @@ namespace NetworkMonitoringWF.Forms
            
         }
 
+        private void NodelariPanelIcindeTut()
+        {
+            if (topoloji == null || topoloji.Nodes == null)
+                return;
+
+            int minX = 60;
+            int minY = 60;
+            int maxX = panelTopoloji.Width - 60;
+            int maxY = panelTopoloji.Height - 60;
+
+            foreach (var node in topoloji.Nodes)
+            {
+                if (node.PosX < minX)
+                    node.PosX = minX;
+
+                if (node.PosY < minY)
+                    node.PosY = minY;
+
+                if (node.PosX > maxX)
+                    node.PosX = maxX;
+
+                if (node.PosY > maxY)
+                    node.PosY = maxY;
+            }
+
+            panelTopoloji.Invalidate();
+        }
+
+        private float Sinirla(float deger, float min, float max)
+        {
+            if (deger < min)
+                return min;
+
+            if (deger > max)
+                return max;
+
+            return deger;
+        }
+
         private async void tsmPing_Click(object sender, EventArgs e)
         {
             if (sagTiklananNode == null)
@@ -269,6 +321,8 @@ namespace NetworkMonitoringWF.Forms
                 "https://localhost:7181/api/Topoloji/Konum/" + konum);
 
             topoloji = JsonConvert.DeserializeObject<TopolojiResponseModel>(json);
+
+            NodelariPanelIcindeTut();
 
             panelTopoloji.Invalidate();
         }

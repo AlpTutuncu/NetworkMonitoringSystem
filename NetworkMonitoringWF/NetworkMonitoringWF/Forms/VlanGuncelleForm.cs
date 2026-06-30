@@ -2,6 +2,7 @@
 using NetworkMonitoringWF.Models;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Net.Http;
 using System.Text;
 using System.Windows.Forms;
@@ -37,6 +38,8 @@ namespace NetworkMonitoringWF.Forms
             txtGateway.Text = seciliVlan.Gateway;
             txtAciklama.Text = seciliVlan.Aciklama;
 
+            PanelKoseYuvarlat(pnlRenk, 12);
+
             cmbKonum.SelectedItem = seciliVlan.Konum;
 
             if (cmbKonum.SelectedItem == null)
@@ -50,6 +53,41 @@ namespace NetworkMonitoringWF.Forms
             {
                 pnlRenk.BackColor = Color.FromArgb(52, 152, 219);
             }
+        }
+
+        private GraphicsPath RoundedRect(Rectangle rect, int radius)
+        {
+            int d = radius * 2;
+            GraphicsPath path = new GraphicsPath();
+            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        private void PanelKoseYuvarlat(Control panel, int radius)
+        {
+            if (panel.Width <= 0 || panel.Height <= 0) return;
+
+            // radius panel boyutunu aşmasın
+            radius = Math.Min(radius, Math.Min(panel.Width, panel.Height) / 2);
+
+            using (GraphicsPath path = RoundedRect(panel.ClientRectangle, radius))
+            {
+                panel.Region = new Region(path);
+            }
+
+            panel.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (GraphicsPath path2 = RoundedRect(panel.ClientRectangle, radius))
+                using (Pen pen = new Pen(panel.Parent?.BackColor ?? Color.White, 2))
+                {
+                    e.Graphics.DrawPath(pen, path2);
+                }
+            };
         }
 
         private void pnlRenk_Click(object sender, EventArgs e)

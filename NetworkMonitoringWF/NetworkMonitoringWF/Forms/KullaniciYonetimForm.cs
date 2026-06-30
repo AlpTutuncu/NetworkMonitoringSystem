@@ -6,6 +6,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace NetworkMonitoringWF.Forms
 {
@@ -28,7 +30,75 @@ namespace NetworkMonitoringWF.Forms
             cmbRol.Items.Add("Personel");
             cmbRol.SelectedIndex = 1;
 
+            PanelKoseVeBorderAyarla(pnlBilgiler, 20, ColorTranslator.FromHtml("#D1D5DB"), 1);
+
             await KullanicilariListele();
+        }
+
+        private void PanelKoseVeBorderAyarla(Control panel, int radius, Color borderColor, int borderWidth)
+        {
+            if (panel.Width <= 0 || panel.Height <= 0)
+                return;
+
+            using (GraphicsPath regionPath = new GraphicsPath())
+            {
+                Rectangle regionRect = new Rectangle(0, 0, panel.Width, panel.Height);
+
+                regionPath.AddArc(regionRect.X, regionRect.Y, radius, radius, 180, 90);
+                regionPath.AddArc(regionRect.Right - radius, regionRect.Y, radius, radius, 270, 90);
+                regionPath.AddArc(regionRect.Right - radius, regionRect.Bottom - radius, radius, radius, 0, 90);
+                regionPath.AddArc(regionRect.X, regionRect.Bottom - radius, radius, radius, 90, 90);
+                regionPath.CloseFigure();
+
+                panel.Region = new Region(regionPath);
+            }
+
+            panel.Tag = new Tuple<int, Color, int>(radius, borderColor, borderWidth);
+
+            panel.Paint -= PanelBorderPaint;
+            panel.Paint += PanelBorderPaint;
+
+            panel.Invalidate();
+        }
+
+        private void PanelBorderPaint(object sender, PaintEventArgs e)
+        {
+            Control panel = sender as Control;
+
+            if (panel == null || panel.Tag == null)
+                return;
+
+            Tuple<int, Color, int> ayar = panel.Tag as Tuple<int, Color, int>;
+
+            if (ayar == null)
+                return;
+
+            int radius = ayar.Item1;
+            Color borderColor = ayar.Item2;
+            int borderWidth = ayar.Item3;
+
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+            Rectangle borderRect = new Rectangle(
+                borderWidth,
+                borderWidth,
+                panel.Width - borderWidth * 2 - 1,
+                panel.Height - borderWidth * 2 - 1);
+
+            using (GraphicsPath borderPath = new GraphicsPath())
+            {
+                borderPath.AddArc(borderRect.X, borderRect.Y, radius, radius, 180, 90);
+                borderPath.AddArc(borderRect.Right - radius, borderRect.Y, radius, radius, 270, 90);
+                borderPath.AddArc(borderRect.Right - radius, borderRect.Bottom - radius, radius, radius, 0, 90);
+                borderPath.AddArc(borderRect.X, borderRect.Bottom - radius, radius, radius, 90, 90);
+                borderPath.CloseFigure();
+
+                using (Pen pen = new Pen(borderColor, borderWidth))
+                {
+                    e.Graphics.DrawPath(pen, borderPath);
+                }
+            }
         }
 
         private async Task KullanicilariListele()
@@ -53,16 +123,31 @@ namespace NetworkMonitoringWF.Forms
                 dgvKullanicilar.MultiSelect = false;
 
                 if (dgvKullanicilar.Columns.Contains("Id"))
-                    dgvKullanicilar.Columns["Id"].Visible = false;
+                {
+                    dgvKullanicilar.Columns["Id"].Visible = true;
+                    dgvKullanicilar.Columns["Id"].HeaderText = "ID";
+                    dgvKullanicilar.Columns["Id"].DisplayIndex = 0;
+                    dgvKullanicilar.Columns["Id"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                    dgvKullanicilar.Columns["Id"].Width = 60;
+                }
 
                 if (dgvKullanicilar.Columns.Contains("KullaniciAdi"))
+                {
                     dgvKullanicilar.Columns["KullaniciAdi"].HeaderText = "Kullanıcı Adı";
+                    dgvKullanicilar.Columns["KullaniciAdi"].DisplayIndex = 1;
+                }
 
                 if (dgvKullanicilar.Columns.Contains("Sifre"))
+                {
                     dgvKullanicilar.Columns["Sifre"].HeaderText = "Şifre";
+                    dgvKullanicilar.Columns["Sifre"].DisplayIndex = 2;
+                }
 
                 if (dgvKullanicilar.Columns.Contains("Rol"))
+                {
                     dgvKullanicilar.Columns["Rol"].HeaderText = "Rol";
+                    dgvKullanicilar.Columns["Rol"].DisplayIndex = 3;
+                }
             }
             catch (Exception ex)
             {

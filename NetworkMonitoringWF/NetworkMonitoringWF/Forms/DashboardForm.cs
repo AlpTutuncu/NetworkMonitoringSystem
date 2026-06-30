@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
+using System.Collections.Generic;
 
 namespace NetworkMonitoringWF.Forms
 {
@@ -20,6 +21,7 @@ namespace NetworkMonitoringWF.Forms
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
+
         }
 
         private async void DashboardForm_Load(object sender, EventArgs e)
@@ -28,20 +30,166 @@ namespace NetworkMonitoringWF.Forms
 
             PanelleriYuvarlat();
 
-            pnlToplam.Resize += (s, ev) => PanelKoseYuvarlat(pnlToplam, 20);
-            pnlAktif.Resize += (s, ev) => PanelKoseYuvarlat(pnlAktif, 20);
-            pnlPasif.Resize += (s, ev) => PanelKoseYuvarlat(pnlPasif, 20);
-            pnlBil.Resize += (s, ev) => PanelKoseYuvarlat(pnlBil, 20);
-            pnlServisDurum.Resize += (s, ev) => PanelKoseYuvarlat(pnlServisDurum, 20);
+            pnlToplam.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlToplam, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
+            pnlAktif.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlAktif, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
+            pnlPasif.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlPasif, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
+            pnlBil.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlBil, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
+            pnlServisDurum.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlServisDurum, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
+            pnlGraph.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlGraph, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
+            pnlGraph2.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlGraph2, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
+            pnlSon.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlSon, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
+
+        }
+
+        //private void CihazTipiGrafikDoldur(DashboardModel model)
+        //{
+        //    chartCihazTipi.Series.Clear();
+        //    chartCihazTipi.ChartAreas.Clear();
+        //    chartCihazTipi.Titles.Clear();
+
+        //    ChartArea alan = new ChartArea("CihazTipiChart");
+        //    chartCihazTipi.ChartAreas.Add(alan);
+
+        //    Series seri = new Series("Cihaz Tipleri");
+        //    seri.ChartType = SeriesChartType.Bar;
+
+        //    if (model.CihazTipDagilimi != null)
+        //    {
+        //        foreach (var item in model.CihazTipDagilimi)
+        //        {
+        //            int pointIndex = seri.Points.AddY(item.Adet);
+        //            seri.Points[pointIndex].AxisLabel = item.CihazTipi;
+        //            seri.Points[pointIndex].Label = item.Adet.ToString();
+        //        }
+        //    }
+
+        //    chartCihazTipi.Series.Add(seri);
+        //    chartCihazTipi.Titles.Add("Cihaz Tipine Göre Dağılım");
+
+        //    chartCihazTipi.Legends.Clear();
+
+        //    chartCihazTipi.ChartAreas[0].AxisX.Interval = 1;
+        //    chartCihazTipi.ChartAreas[0].AxisX.MajorGrid.Enabled = false;
+        //    chartCihazTipi.ChartAreas[0].AxisY.MajorGrid.Enabled = false;
+        //}
+
+        private void CihazTipiGrafikDoldur(DashboardModel model)
+        {
+            chartCihazTipi.Series.Clear();
+            chartCihazTipi.ChartAreas.Clear();
+            chartCihazTipi.Titles.Clear();
+            chartCihazTipi.Legends.Clear();
+
+            // ── Genel chart ──────────────────────────────────────────────
+            chartCihazTipi.BackColor = Color.White;
+            chartCihazTipi.BorderlineColor = Color.Transparent;
+            chartCihazTipi.BorderlineDashStyle = ChartDashStyle.Solid;
+            chartCihazTipi.BorderlineWidth = 0;
+            chartCihazTipi.BorderSkin.SkinStyle = BorderSkinStyle.None;
+
+            // ── ChartArea ────────────────────────────────────────────────
+            var alan = new ChartArea("CihazTipiChart");
+
+            alan.BackColor = Color.White;
+            alan.BorderColor = Color.Transparent;
+            alan.ShadowOffset = 0;
+
+            alan.InnerPlotPosition.Auto = false;
+            alan.InnerPlotPosition.X = 22;      // 2 → 22, sol tarafa cihaz adları için yer aç
+            alan.InnerPlotPosition.Y = 2;
+            alan.InnerPlotPosition.Width = 60;  // 72 → 60, genişliği azalt
+            alan.InnerPlotPosition.Height = 92;
+
+            // Y ekseni (cihaz adları)
+            alan.AxisY.LabelStyle.Font = new Font("Segoe UI", 8.5f);
+            alan.AxisY.LabelStyle.ForeColor = Color.FromArgb(100, 105, 125);
+            alan.AxisY.LabelStyle.Interval = 1;   // bunu ekle — her etiketi göster
+            alan.AxisY.LineColor = Color.Transparent;
+            alan.AxisY.MajorGrid.Enabled = false;
+            alan.AxisY.MajorTickMark.Enabled = false;
+
+            // X ekseni (değer)
+            alan.AxisX.LabelStyle.Font = new Font("Segoe UI", 8f);
+            alan.AxisX.LabelStyle.ForeColor = Color.FromArgb(100, 105, 125);
+            alan.AxisX.LineColor = Color.FromArgb(225, 227, 235);
+            alan.AxisX.LineWidth = 1;
+            alan.AxisX.MajorGrid.LineColor = Color.FromArgb(235, 234, 230);
+            alan.AxisX.MajorGrid.LineDashStyle = ChartDashStyle.Solid;
+            alan.AxisX.MajorGrid.LineWidth = 1;
+            alan.AxisX.MajorTickMark.Enabled = false;
+            alan.AxisX.Minimum = 0;
+            alan.AxisX.Interval = 1;
+
+            chartCihazTipi.ChartAreas.Add(alan);
+
+            // ── Renk paleti ──────────────────────────────────────────────
+            var renkler = new[]
+            {
+        Color.FromArgb(42,  120, 214),
+        Color.FromArgb(74,  58,  167),
+        Color.FromArgb(237, 161, 0),
+        Color.FromArgb(27,  175, 122),
+        Color.FromArgb(0,   131, 0),
+        Color.FromArgb(227, 73,  72),
+        Color.FromArgb(137, 135, 129),
+    };
+
+            // ── Seri ─────────────────────────────────────────────────────
+            var seri = new Series("Cihaz Tipleri")
+            {
+                ChartType = SeriesChartType.Bar,
+                BorderWidth = 0,
+                Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
+            };
+            seri["PointWidth"] = "0.55";
+
+            if (model.CihazTipDagilimi != null)
+            {
+                int i = 0;
+                foreach (var item in model.CihazTipDagilimi)
+                {
+                    int idx = seri.Points.AddXY(item.CihazTipi, item.Adet);
+                    var p = seri.Points[idx];
+
+                    if (item.CihazTipi == "Router")
+                        p.Color = Color.FromArgb(42, 120, 214);
+                    else if (item.CihazTipi == "Switch")
+                        p.Color = Color.FromArgb(74, 58, 167);
+                    else if (item.CihazTipi == "Server")
+                        p.Color = Color.FromArgb(237, 161, 0);
+                    else if (item.CihazTipi == "PC")
+                        p.Color = Color.FromArgb(27, 175, 122);
+                    else if (item.CihazTipi == "Access Point")
+                        p.Color = Color.FromArgb(0, 131, 0);
+                    else if (item.CihazTipi == "Kamera")
+                        p.Color = Color.FromArgb(227, 73, 72);
+                    else
+                        p.Color = Color.FromArgb(137, 135, 129);
+
+                    p.AxisLabel = item.CihazTipi;
+                    p.Label = item.Adet.ToString();
+                    p.LabelForeColor = Color.FromArgb(25, 27, 40);
+                    p.LabelFormat = "";
+
+                    i++;
+                }
+            }
+
+            chartCihazTipi.Series.Add(seri);
         }
 
         private void PanelleriYuvarlat()
         {
-            PanelKoseYuvarlat(pnlToplam, 20);
-            PanelKoseYuvarlat(pnlAktif, 20);
-            PanelKoseYuvarlat(pnlPasif, 20);
-            PanelKoseYuvarlat(pnlBil, 20);
-            PanelKoseYuvarlat(pnlServisDurum, 20);
+            Color borderRenk = ColorTranslator.FromHtml("#ced0e0");
+
+            PanelKoseVeBorderAyarla(pnlToplam, 20, borderRenk, 1);
+            PanelKoseVeBorderAyarla(pnlAktif, 20, borderRenk, 1);
+            PanelKoseVeBorderAyarla(pnlPasif, 20, borderRenk, 1);
+            PanelKoseVeBorderAyarla(pnlBil, 20, borderRenk, 1);
+            PanelKoseVeBorderAyarla(pnlServisDurum, 20, borderRenk, 1);
+            PanelKoseVeBorderAyarla(pnlGraph, 20, borderRenk, 1);
+            PanelKoseVeBorderAyarla(pnlGraph2, 20, borderRenk, 1);
+            PanelKoseVeBorderAyarla(pnlSon, 20, borderRenk, 1);
         }
 
         private void ServisPaneliniGuncelle(bool servisAktifMi)
@@ -50,17 +198,62 @@ namespace NetworkMonitoringWF.Forms
             {
                 pnlServisDurum.BackColor = Color.FromArgb(220, 248, 230);
                 lblServisDurum.ForeColor = Color.FromArgb(39, 140, 70);
-                lblServisDurum.Text = "Ping Servisi: Aktif";
+                lblServisDurum.Text = "Aktif";
             }
             else
             {
                 pnlServisDurum.BackColor = Color.FromArgb(255, 225, 225);
                 lblServisDurum.ForeColor = Color.FromArgb(180, 50, 50);
-                lblServisDurum.Text = "Ping Servisi: Pasif";
+                lblServisDurum.Text = "Pasif";
             }
 
             PanelKoseYuvarlat(pnlServisDurum, 20);
         }
+
+        private void PanelKoseVeBorderAyarla(Control panel, int radius, Color borderColor, int borderWidth)
+{
+    if (panel.Width <= 0 || panel.Height <= 0)
+        return;
+
+    GraphicsPath regionPath = new GraphicsPath();
+
+    Rectangle regionRect = new Rectangle(0, 0, panel.Width, panel.Height);
+
+    regionPath.AddArc(regionRect.X, regionRect.Y, radius, radius, 180, 90);
+    regionPath.AddArc(regionRect.Right - radius, regionRect.Y, radius, radius, 270, 90);
+    regionPath.AddArc(regionRect.Right - radius, regionRect.Bottom - radius, radius, radius, 0, 90);
+    regionPath.AddArc(regionRect.X, regionRect.Bottom - radius, radius, radius, 90, 90);
+    regionPath.CloseFigure();
+
+    panel.Region = new Region(regionPath);
+
+    panel.Paint += (s, e) =>
+    {
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+        Rectangle borderRect = new Rectangle(
+            borderWidth / 2,
+            borderWidth / 2,
+            panel.Width - borderWidth - 1,
+            panel.Height - borderWidth - 1);
+
+        using (GraphicsPath borderPath = new GraphicsPath())
+        {
+            borderPath.AddArc(borderRect.X, borderRect.Y, radius, radius, 180, 90);
+            borderPath.AddArc(borderRect.Right - radius, borderRect.Y, radius, radius, 270, 90);
+            borderPath.AddArc(borderRect.Right - radius, borderRect.Bottom - radius, radius, radius, 0, 90);
+            borderPath.AddArc(borderRect.X, borderRect.Bottom - radius, radius, radius, 90, 90);
+            borderPath.CloseFigure();
+
+            using (Pen pen = new Pen(borderColor, borderWidth))
+            {
+                e.Graphics.DrawPath(pen, borderPath);
+            }
+        }
+    };
+
+    panel.Invalidate();
+}
 
         private void PanelKoseYuvarlat(Control panel, int radius)
         {
@@ -101,9 +294,11 @@ namespace NetworkMonitoringWF.Forms
                 ServisPaneliniGuncelle(model.PingServisAktifMi);
 
                 lblSonKontrol.Text = "Son Kontrol: " + model.SonKontrolZamani;
-                lblSonIslem.Text = "Son İşlem: " + model.SonIslem;
+                lblSonIslem.Text = "" + model.SonIslem;
+                lblSonAlarm.Text = "" + model.SonAlarm;
 
                 GrafikDoldur(model);
+                CihazTipiGrafikDoldur(model);
             }
             catch (Exception ex)
             {
@@ -146,7 +341,6 @@ namespace NetworkMonitoringWF.Forms
 
             chartDurum.Series.Add(seri);
             chartDurum.Titles.Clear();
-            chartDurum.Titles.Add("Aktif / Pasif Cihaz Dağılımı");
         }
 
         private void btnGeri_Click(object sender, EventArgs e)

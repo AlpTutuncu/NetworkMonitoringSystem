@@ -136,6 +136,7 @@
       <DependentUpon>VlanYonetimForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\AlarmBildirimModel.cs" />
+    <Compile Include="Models\CihazTipDagilimModel.cs" />
     <Compile Include="Models\DashboardModel.cs" />
     <Compile Include="Controls\DoubleBufferedPanel.cs">
       <SubType>Component</SubType>

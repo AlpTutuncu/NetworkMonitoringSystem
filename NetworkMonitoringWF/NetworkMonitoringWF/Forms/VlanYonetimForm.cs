@@ -3,6 +3,7 @@ using NetworkMonitoringWF.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -21,6 +22,12 @@ namespace NetworkMonitoringWF.Forms
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
 
+            dataGridView1.CellClick -= dataGridView1_CellClick;
+            dataGridView1.CellClick += dataGridView1_CellClick;
+
+            dataGridView1.SelectionChanged -= dataGridView1_SelectionChanged;
+            dataGridView1.SelectionChanged += dataGridView1_SelectionChanged;
+
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Text = "VLAN Yönetimi";
             kullaniciRol = rol;
@@ -32,9 +39,16 @@ namespace NetworkMonitoringWF.Forms
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
 
+            dataGridView1.CellClick -= dataGridView1_CellClick;
+            dataGridView1.CellClick += dataGridView1_CellClick;
+
+            dataGridView1.SelectionChanged -= dataGridView1_SelectionChanged;
+            dataGridView1.SelectionChanged += dataGridView1_SelectionChanged;
+
             this.StartPosition = FormStartPosition.CenterScreen;
             kullaniciRol = "Admin";
         }
+
 
         private void RolYetkileriniUygula()
         {
@@ -87,7 +101,8 @@ namespace NetworkMonitoringWF.Forms
             PnlIstatistikStili();
             ButonlariStillendir();
 
-            await VlanlariGetir();
+            PanelKoseYuvarlat(panel1, 20);
+            PanelKoseYuvarlat(pnlRenk, 12);
         }
 
         private async Task VlanlariGetir()
@@ -108,10 +123,7 @@ namespace NetworkMonitoringWF.Forms
                 vlanListesi =
                     JsonConvert.DeserializeObject<List<VlanModel>>(json);
 
-                lstVlanlar.DataSource = null;
-                lstVlanlar.DataSource = vlanListesi;
-
-                DetaylariTemizle();
+                GridiDoldur(vlanListesi);
             }
             catch (Exception ex)
             {
@@ -150,8 +162,7 @@ namespace NetworkMonitoringWF.Forms
                 vlanListesi =
                     JsonConvert.DeserializeObject<List<VlanModel>>(json);
 
-                lstVlanlar.DataSource = null;
-                lstVlanlar.DataSource = vlanListesi;
+                GridiDoldur(vlanListesi);
 
                 DetaylariTemizle();
             }
@@ -165,12 +176,198 @@ namespace NetworkMonitoringWF.Forms
             }
         }
 
-        private void lstVlanlar_SelectedIndexChanged(object sender, EventArgs e)
+        private void GridiDoldur(List<VlanModel> vlanlar)
         {
-            if (lstVlanlar.SelectedItem == null)
+            dataGridView1.DataSource = null;
+            dataGridView1.DataSource = vlanlar;
+
+            GridGenelAyarlar();
+            KolonBasliklariniAyarla();
+            KolonSirasiAyarla();
+
+            if (vlanlar != null && vlanlar.Count > 0 && dataGridView1.Rows.Count > 0)
+            {
+                dataGridView1.ClearSelection();
+
+                dataGridView1.Rows[0].Selected = true;
+
+                foreach (DataGridViewCell cell in dataGridView1.Rows[0].Cells)
+                {
+                    if (cell.Visible)
+                    {
+                        dataGridView1.CurrentCell = cell;
+                        break;
+                    }
+                }
+
+                seciliVlan = vlanlar[0];
+                DetayGoster(seciliVlan);
+            }
+            else
+            {
+                DetaylariTemizle();
+            }
+        }
+
+        private void IlkSatiriSec()
+        {
+            if (vlanListesi != null && vlanListesi.Count > 0 && dataGridView1.Rows.Count > 0)
+            {
+                dataGridView1.ClearSelection();
+
+                dataGridView1.Rows[0].Selected = true;
+
+                foreach (DataGridViewCell cell in dataGridView1.Rows[0].Cells)
+                {
+                    if (cell.Visible)
+                    {
+                        dataGridView1.CurrentCell = cell;
+                        break;
+                    }
+                }
+
+                seciliVlan = vlanListesi[0];
+                DetayGoster(seciliVlan);
+            }
+            else
+            {
+                DetaylariTemizle();
+            }
+        }
+
+        private GraphicsPath RoundedRect(Rectangle rect, int radius)
+        {
+            int d = radius * 2;
+            GraphicsPath path = new GraphicsPath();
+            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        private void PanelKoseYuvarlat(Control panel, int radius)
+        {
+            if (panel.Width <= 0 || panel.Height <= 0) return;
+
+            // radius panel boyutunu aşmasın
+            radius = Math.Min(radius, Math.Min(panel.Width, panel.Height) / 2);
+
+            using (GraphicsPath path = RoundedRect(panel.ClientRectangle, radius))
+            {
+                panel.Region = new Region(path);
+            }
+
+            panel.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                using (GraphicsPath path2 = RoundedRect(panel.ClientRectangle, radius))
+                using (Pen pen = new Pen(panel.Parent?.BackColor ?? Color.White, 2))
+                {
+                    e.Graphics.DrawPath(pen, path2);
+                }
+            };
+        }
+
+        private void GridGenelAyarlar()
+        {
+            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridView1.AllowUserToAddRows = false;
+            dataGridView1.ReadOnly = true;
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridView1.MultiSelect = false;
+
+            dataGridView1.EnableHeadersVisualStyles = false;
+
+            dataGridView1.ColumnHeadersHeightSizeMode =
+                DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+
+            dataGridView1.ColumnHeadersHeight = 45;
+
+            dataGridView1.RowTemplate.Height = 38;
+
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                row.Height = 38;
+            }
+        }
+
+        private void KolonBasliklariniAyarla()
+        {
+            if (dataGridView1.Columns.Contains("Id"))
+                dataGridView1.Columns["Id"].Visible = false;
+
+            if (dataGridView1.Columns.Contains("Renk"))
+                dataGridView1.Columns["Renk"].Visible = false;
+
+            if (dataGridView1.Columns.Contains("VlanNo"))
+                dataGridView1.Columns["VlanNo"].HeaderText = "VLAN No";
+
+            if (dataGridView1.Columns.Contains("VlanAdi"))
+                dataGridView1.Columns["VlanAdi"].HeaderText = "VLAN Adı";
+
+            if (dataGridView1.Columns.Contains("Subnet"))
+                dataGridView1.Columns["Subnet"].HeaderText = "Subnet";
+
+            if (dataGridView1.Columns.Contains("Gateway"))
+                dataGridView1.Columns["Gateway"].HeaderText = "Gateway";
+
+            if (dataGridView1.Columns.Contains("Konum"))
+                dataGridView1.Columns["Konum"].Visible = false;
+
+            if (dataGridView1.Columns.Contains("Aciklama"))
+                dataGridView1.Columns["Aciklama"].Visible = false;
+
+            if (dataGridView1.Columns.Contains("CihazSayisi"))
+                dataGridView1.Columns["CihazSayisi"].HeaderText = "Cihaz Sayısı";
+        }
+
+        private void KolonSirasiAyarla()
+        {
+            int index = 0;
+
+            if (dataGridView1.Columns.Contains("VlanNo"))
+                dataGridView1.Columns["VlanNo"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("VlanAdi"))
+                dataGridView1.Columns["VlanAdi"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("Subnet"))
+                dataGridView1.Columns["Subnet"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("Gateway"))
+                dataGridView1.Columns["Gateway"].DisplayIndex = index++;
+
+            if (dataGridView1.Columns.Contains("CihazSayisi"))
+                dataGridView1.Columns["CihazSayisi"].DisplayIndex = index++;
+        }
+
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
                 return;
 
-            seciliVlan = lstVlanlar.SelectedItem as VlanModel;
+            if (e.RowIndex >= vlanListesi.Count)
+                return;
+
+            seciliVlan = vlanListesi[e.RowIndex];
+
+            if (seciliVlan != null)
+                DetayGoster(seciliVlan);
+        }
+
+        private void dataGridView1_SelectionChanged(object sender, EventArgs e)
+        {
+            if (dataGridView1.CurrentRow == null)
+                return;
+
+            int rowIndex = dataGridView1.CurrentRow.Index;
+
+            if (rowIndex < 0 || rowIndex >= vlanListesi.Count)
+                return;
+
+            seciliVlan = vlanListesi[rowIndex];
 
             if (seciliVlan != null)
                 DetayGoster(seciliVlan);
@@ -182,7 +379,6 @@ namespace NetworkMonitoringWF.Forms
             lblVlanAdi.Text = "" + vlan.VlanAdi;
             lblSubnet.Text = "" + BosDeger(vlan.Subnet);
             lblGateway.Text = "" + BosDeger(vlan.Gateway);
-            lblKonum.Text = "" + BosDeger(vlan.Konum);
             lblAciklama.Text = "" + BosDeger(vlan.Aciklama);
             lblCihazSayisi.Text = "" + vlan.CihazSayisi;
 
@@ -207,7 +403,6 @@ namespace NetworkMonitoringWF.Forms
             lblVlanAdi.Text = "";
             lblSubnet.Text = "";
             lblGateway.Text = "";
-            lblKonum.Text = "";
             lblAciklama.Text = "";
             lblCihazSayisi.Text = "";
 

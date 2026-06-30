@@ -72,6 +72,39 @@ namespace APIProje.Controllers
 
                 sonIslemReader.Close();
 
+                object sonAlarm = new SqlCommand(
+                @"SELECT TOP 1 Mesaj
+                FROM AlarmBildirim
+                ORDER BY Tarih DESC",
+                baglanti).ExecuteScalar();
+
+                model.SonAlarm =
+                    sonAlarm == null || sonAlarm == DBNull.Value
+                    ? "Alarm kaydı bulunamadı."
+                    : sonAlarm.ToString();
+
+                model.CihazTipDagilimi = new List<CihazTipDagilimModel>();
+
+                SqlCommand tipKomut = new SqlCommand(
+                    @"SELECT CihazTipi, COUNT(*) AS Adet
+                    FROM Cihazlar
+                    GROUP BY CihazTipi
+                    ORDER BY Adet DESC",
+                    baglanti);
+
+                SqlDataReader tipReader = tipKomut.ExecuteReader();
+
+                while (tipReader.Read())
+                {
+                    model.CihazTipDagilimi.Add(new CihazTipDagilimModel
+                    {
+                        CihazTipi = tipReader["CihazTipi"].ToString(),
+                        Adet = Convert.ToInt32(tipReader["Adet"])
+                    });
+                }
+
+                tipReader.Close();
+
                 model.PingServisAktifMi = _state.IsActive;
 
                 return Ok(model);

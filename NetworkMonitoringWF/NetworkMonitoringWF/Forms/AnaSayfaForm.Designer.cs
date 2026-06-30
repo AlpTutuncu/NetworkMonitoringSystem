@@ -540,11 +540,11 @@
             // lblBaslikIcon
             // 
             this.lblBaslikIcon.AutoSize = true;
-            this.lblBaslikIcon.Font = new System.Drawing.Font("Microsoft Sans Serif", 26F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
+            this.lblBaslikIcon.Font = new System.Drawing.Font("Segoe UI", 20F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(162)));
             this.lblBaslikIcon.ForeColor = System.Drawing.Color.Coral;
-            this.lblBaslikIcon.Location = new System.Drawing.Point(8, 6);
+            this.lblBaslikIcon.Location = new System.Drawing.Point(13, 8);
             this.lblBaslikIcon.Name = "lblBaslikIcon";
-            this.lblBaslikIcon.Size = new System.Drawing.Size(84, 59);
+            this.lblBaslikIcon.Size = new System.Drawing.Size(78, 54);
             this.lblBaslikIcon.TabIndex = 29;
             this.lblBaslikIcon.Text = "🌐";
             // 

@@ -8,6 +8,9 @@
         public int BilinmeyenCihaz { get; set; }
         public string SonKontrolZamani { get; set; }
         public string SonIslem { get; set; }
+        public string SonAlarm { get; set; }
         public bool PingServisAktifMi { get; set; }
+
+        public List<CihazTipDagilimModel> CihazTipDagilimi { get; set; }
     }
 }
