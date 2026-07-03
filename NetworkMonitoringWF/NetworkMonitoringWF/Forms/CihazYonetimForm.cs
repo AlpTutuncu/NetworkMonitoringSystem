@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using NetworkMonitoringWF.Models;
@@ -12,6 +11,7 @@ namespace NetworkMonitoringWF
 {
     public partial class CihazYonetimForm : Form
     {
+        private readonly HttpClient client = new HttpClient();
         private string kullaniciRol;
 
         public CihazYonetimForm(string rol)
@@ -24,14 +24,18 @@ namespace NetworkMonitoringWF
 
             kullaniciRol = rol;
 
-            // Yeni DataGridView / PoisonDataGridView eklendiğinde event kopmasın diye garanti bağlıyoruz.
             dataGridView1.CellContentClick -= dataGridView1_CellContentClick;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
         }
 
         private async void CihazYonetimForm_Load(object sender, EventArgs e)
         {
+            CihazEkleButonunuAyarla();
             await CihazListele();
+        }
+
+        private void CihazEkleButonunuAyarla()
+        {
             btnCihazEkle.BackColor = ColorTranslator.FromHtml("#97de8c");
             btnCihazEkle.ForeColor = ColorTranslator.FromHtml("#000000");
             btnCihazEkle.FlatStyle = FlatStyle.Flat;
@@ -42,8 +46,6 @@ namespace NetworkMonitoringWF
         {
             try
             {
-                HttpClient client = new HttpClient();
-
                 string json = await client.GetStringAsync(
                     "https://localhost:7181/api/Cihaz/CihazListele");
 
@@ -68,6 +70,7 @@ namespace NetworkMonitoringWF
             ButonKolonlariEkle();
             KolonSirasiAyarla();
             ButonRenkleriniAyarla();
+            KolonGenislikleriniAyarla();
             RolYetkileriniUygula();
         }
 
@@ -85,7 +88,6 @@ namespace NetworkMonitoringWF
                 DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
             dataGridView1.ColumnHeadersHeight = 45;
-
             dataGridView1.RowTemplate.Height = 38;
 
             foreach (DataGridViewRow row in dataGridView1.Rows)
@@ -134,7 +136,7 @@ namespace NetworkMonitoringWF
                 pingBtn.DefaultCellStyle.ForeColor = Color.Black;
                 pingBtn.Name = "Ping";
                 pingBtn.HeaderText = "Ping";
-                pingBtn.Text = "Ping At";
+                pingBtn.Text = "Ping";
                 pingBtn.UseColumnTextForButtonValue = true;
 
                 dataGridView1.Columns.Add(pingBtn);
@@ -147,8 +149,8 @@ namespace NetworkMonitoringWF
                 guncelleBtn.FlatStyle = FlatStyle.Flat;
                 guncelleBtn.DefaultCellStyle.ForeColor = Color.Black;
                 guncelleBtn.Name = "Guncelle";
-                guncelleBtn.HeaderText = "Güncelle";
-                guncelleBtn.Text = "Güncelle";
+                guncelleBtn.HeaderText = "✏️";
+                guncelleBtn.Text = "✏️";
                 guncelleBtn.UseColumnTextForButtonValue = true;
 
                 dataGridView1.Columns.Add(guncelleBtn);
@@ -161,11 +163,44 @@ namespace NetworkMonitoringWF
                 silBtn.FlatStyle = FlatStyle.Flat;
                 silBtn.DefaultCellStyle.ForeColor = Color.Black;
                 silBtn.Name = "Sil";
-                silBtn.HeaderText = "Sil";
-                silBtn.Text = "Sil";
+                silBtn.HeaderText = "🗑️";
+                silBtn.Text = "🗑️";
                 silBtn.UseColumnTextForButtonValue = true;
 
                 dataGridView1.Columns.Add(silBtn);
+            }
+        }
+
+        private void KolonGenislikleriniAyarla()
+        {
+            if (dataGridView1.Columns.Contains("Id"))
+            {
+                dataGridView1.Columns["Id"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dataGridView1.Columns["Id"].Width = 55;
+            }
+
+            if (dataGridView1.Columns.Contains("Durum"))
+            {
+                dataGridView1.Columns["Durum"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dataGridView1.Columns["Durum"].Width = 90;
+            }
+
+            if (dataGridView1.Columns.Contains("Ping"))
+            {
+                dataGridView1.Columns["Ping"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dataGridView1.Columns["Ping"].Width = 70;
+            }
+
+            if (dataGridView1.Columns.Contains("Guncelle"))
+            {
+                dataGridView1.Columns["Guncelle"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dataGridView1.Columns["Guncelle"].Width = 55;
+            }
+
+            if (dataGridView1.Columns.Contains("Sil"))
+            {
+                dataGridView1.Columns["Sil"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dataGridView1.Columns["Sil"].Width = 55;
             }
         }
 
@@ -206,12 +241,6 @@ namespace NetworkMonitoringWF
 
         private void ButonRenkleriniAyarla()
         {
-            //if (dataGridView1.Columns.Contains("Ping"))
-            //{
-            //    dataGridView1.Columns["Ping"].DefaultCellStyle.BackColor = Color.LightGreen;
-            //    dataGridView1.Columns["Ping"].DefaultCellStyle.ForeColor = Color.Black;
-            //}
-
             if (dataGridView1.Columns.Contains("Guncelle"))
             {
                 dataGridView1.Columns["Guncelle"].DefaultCellStyle.BackColor = Color.LightBlue;
@@ -263,114 +292,123 @@ namespace NetworkMonitoringWF
 
             if (kolonAdi == "Ping")
             {
-                int id = Convert.ToInt32(
-                    dataGridView1.Rows[e.RowIndex].Cells["Id"].Value);
-
-                HttpClient client = new HttpClient();
-
-                HttpResponseMessage response =
-                    await client.PostAsync(
-                        "https://localhost:7181/api/Ping/TekPing/" + id,
-                        null);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    string json = await response.Content.ReadAsStringAsync();
-
-                    PingSonucModel sonuc =
-                        JsonConvert.DeserializeObject<PingSonucModel>(json);
-
-                    MessageBox.Show(
-                        "Cihaz Adı: " + sonuc.CihazAdi +
-                        "\nIP Adresi: " + sonuc.IpAdresi +
-                        "\nDurum: " + sonuc.Durum +
-                        "\nGecikme: " + sonuc.Gecikme + " ms",
-                        "Ping Sonucu");
-
-                    await CihazListele();
-                }
-                else
-                {
-                    MessageBox.Show("Ping işlemi başarısız.");
-                }
+                await CihazaPingAt(e.RowIndex);
             }
-
-            if (kolonAdi == "Sil")
+            else if (kolonAdi == "Sil")
             {
-                int id = Convert.ToInt32(
-                    dataGridView1.Rows[e.RowIndex].Cells["Id"].Value);
-
-                string cihazAdi =
-                    dataGridView1.Rows[e.RowIndex].Cells["CihazAdi"].Value.ToString();
-
-                DialogResult cevap = MessageBox.Show(
-                    cihazAdi + " cihazını silmek istiyor musunuz?",
-                    "Silme Onayı",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning);
-
-                if (cevap == DialogResult.Yes)
-                {
-                    HttpClient client = new HttpClient();
-
-                    HttpResponseMessage response =
-                        await client.DeleteAsync(
-                            "https://localhost:7181/api/Cihaz/CihazSil/" + id);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show("Cihaz silindi.");
-                        await CihazListele();
-                    }
-                    else
-                    {
-                        string hata = await response.Content.ReadAsStringAsync();
-                        MessageBox.Show("Cihaz silinemedi: " + hata);
-                    }
-                }
+                await CihazSil(e.RowIndex);
             }
-
-            if (kolonAdi == "Guncelle")
+            else if (kolonAdi == "Guncelle")
             {
-                int id = Convert.ToInt32(
-                    dataGridView1.Rows[e.RowIndex].Cells["Id"].Value);
+                await CihazGuncelle(e.RowIndex);
+            }
+        }
 
-                string cihazAdi =
-                    dataGridView1.Rows[e.RowIndex].Cells["CihazAdi"].Value.ToString();
+        private async Task CihazaPingAt(int rowIndex)
+        {
+            int id = Convert.ToInt32(
+                dataGridView1.Rows[rowIndex].Cells["Id"].Value);
 
-                string ipAdresi =
-                    dataGridView1.Rows[e.RowIndex].Cells["IPAdresi"].Value.ToString();
+            HttpResponseMessage response =
+                await client.PostAsync(
+                    "https://localhost:7181/api/Ping/TekPing/" + id,
+                    null);
 
-                string cihazTipi =
-                    dataGridView1.Rows[e.RowIndex].Cells["CihazTipi"].Value.ToString();
+            if (response.IsSuccessStatusCode)
+            {
+                string json = await response.Content.ReadAsStringAsync();
 
-                string konum =
-                    dataGridView1.Rows[e.RowIndex].Cells["Konum"].Value.ToString();
+                PingSonucModel sonuc =
+                    JsonConvert.DeserializeObject<PingSonucModel>(json);
 
-                int? vlanId = null;
-
-                object vlanObj =
-                    dataGridView1.Rows[e.RowIndex].Cells["VlanId"].Value;
-
-                if (vlanObj != null &&
-                    vlanObj != DBNull.Value &&
-                    vlanObj.ToString() != "")
-                {
-                    vlanId = Convert.ToInt32(vlanObj);
-                }
-
-                CihazGuncelleForm form = new CihazGuncelleForm(
-                    id,
-                    cihazAdi,
-                    ipAdresi,
-                    cihazTipi,
-                    konum,
-                    vlanId);
-
-                form.ShowDialog();
+                MessageBox.Show(
+                    "Cihaz Adı: " + sonuc.CihazAdi +
+                    "\nIP Adresi: " + sonuc.IpAdresi +
+                    "\nDurum: " + sonuc.Durum +
+                    "\nGecikme: " + sonuc.Gecikme + " ms",
+                    "Ping Sonucu");
 
                 await CihazListele();
             }
+            else
+            {
+                MessageBox.Show("Ping işlemi başarısız.");
+            }
+        }
+
+        private async Task CihazSil(int rowIndex)
+        {
+            int id = Convert.ToInt32(
+                dataGridView1.Rows[rowIndex].Cells["Id"].Value);
+
+            string cihazAdi =
+                dataGridView1.Rows[rowIndex].Cells["CihazAdi"].Value.ToString();
+
+            DialogResult cevap = MessageBox.Show(
+                cihazAdi + " cihazını silmek istiyor musunuz?",
+                "Silme Onayı",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (cevap != DialogResult.Yes)
+                return;
+
+            HttpResponseMessage response =
+                await client.DeleteAsync(
+                    "https://localhost:7181/api/Cihaz/CihazSil/" + id);
+
+            if (response.IsSuccessStatusCode)
+            {
+                MessageBox.Show("Cihaz silindi.");
+                await CihazListele();
+            }
+            else
+            {
+                string hata = await response.Content.ReadAsStringAsync();
+                MessageBox.Show("Cihaz silinemedi: " + hata);
+            }
+        }
+
+        private async Task CihazGuncelle(int rowIndex)
+        {
+            int id = Convert.ToInt32(
+                dataGridView1.Rows[rowIndex].Cells["Id"].Value);
+
+            string cihazAdi =
+                dataGridView1.Rows[rowIndex].Cells["CihazAdi"].Value.ToString();
+
+            string ipAdresi =
+                dataGridView1.Rows[rowIndex].Cells["IPAdresi"].Value.ToString();
+
+            string cihazTipi =
+                dataGridView1.Rows[rowIndex].Cells["CihazTipi"].Value.ToString();
+
+            string konum =
+                dataGridView1.Rows[rowIndex].Cells["Konum"].Value.ToString();
+
+            int? vlanId = null;
+
+            object vlanObj =
+                dataGridView1.Rows[rowIndex].Cells["VlanId"].Value;
+
+            if (vlanObj != null &&
+                vlanObj != DBNull.Value &&
+                vlanObj.ToString() != "")
+            {
+                vlanId = Convert.ToInt32(vlanObj);
+            }
+
+            CihazGuncelleForm form = new CihazGuncelleForm(
+                id,
+                cihazAdi,
+                ipAdresi,
+                cihazTipi,
+                konum,
+                vlanId);
+
+            form.ShowDialog();
+
+            await CihazListele();
         }
 
         private async void btnCihazEkle_Click(object sender, EventArgs e)
@@ -393,10 +431,9 @@ namespace NetworkMonitoringWF
 
             try
             {
-                HttpClient client = new HttpClient();
-
                 string json = await client.GetStringAsync(
-                    "https://localhost:7181/api/Cihaz/CihazAra/" + kelime);
+                    "https://localhost:7181/api/Cihaz/CihazAra/" +
+                    Uri.EscapeDataString(kelime));
 
                 List<CihazModel> cihazlar =
                     JsonConvert.DeserializeObject<List<CihazModel>>(json);

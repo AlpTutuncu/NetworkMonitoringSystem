@@ -14,6 +14,7 @@ namespace NetworkMonitoringWF.Forms
     public partial class KullaniciYonetimForm : Form
     {
         private int seciliKullaniciId = 0;
+        private readonly HttpClient client = new HttpClient();
 
         public KullaniciYonetimForm()
         {
@@ -33,6 +34,68 @@ namespace NetworkMonitoringWF.Forms
             PanelKoseVeBorderAyarla(pnlBilgiler, 20, ColorTranslator.FromHtml("#D1D5DB"), 1);
 
             await KullanicilariListele();
+        }
+
+        private void GridGenelAyarlar()
+        {
+            dgvKullanicilar.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvKullanicilar.AllowUserToAddRows = false;
+            dgvKullanicilar.ReadOnly = true;
+            dgvKullanicilar.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvKullanicilar.MultiSelect = false;
+        }
+
+        private void KolonlariAyarla()
+        {
+            if (dgvKullanicilar.Columns.Contains("Id"))
+            {
+                dgvKullanicilar.Columns["Id"].Visible = true;
+                dgvKullanicilar.Columns["Id"].HeaderText = "ID";
+                dgvKullanicilar.Columns["Id"].DisplayIndex = 0;
+                dgvKullanicilar.Columns["Id"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgvKullanicilar.Columns["Id"].Width = 60;
+            }
+
+            if (dgvKullanicilar.Columns.Contains("KullaniciAdi"))
+            {
+                dgvKullanicilar.Columns["KullaniciAdi"].HeaderText = "Kullanıcı Adı";
+                dgvKullanicilar.Columns["KullaniciAdi"].DisplayIndex = 1;
+            }
+
+            if (dgvKullanicilar.Columns.Contains("Sifre"))
+            {
+                dgvKullanicilar.Columns["Sifre"].HeaderText = "Şifre";
+                dgvKullanicilar.Columns["Sifre"].DisplayIndex = 2;
+            }
+
+            if (dgvKullanicilar.Columns.Contains("Rol"))
+            {
+                dgvKullanicilar.Columns["Rol"].HeaderText = "Rol";
+                dgvKullanicilar.Columns["Rol"].DisplayIndex = 3;
+            }
+        }
+
+        private bool FormKontrolEt()
+        {
+            if (string.IsNullOrWhiteSpace(txtKullaniciAdi.Text))
+            {
+                MessageBox.Show("Kullanıcı adı boş olamaz.");
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtSifre.Text))
+            {
+                MessageBox.Show("Şifre boş olamaz.");
+                return false;
+            }
+
+            if (cmbRol.SelectedItem == null)
+            {
+                MessageBox.Show("Lütfen rol seçiniz.");
+                return false;
+            }
+
+            return true;
         }
 
         private void PanelKoseVeBorderAyarla(Control panel, int radius, Color borderColor, int borderWidth)
@@ -105,8 +168,6 @@ namespace NetworkMonitoringWF.Forms
         {
             try
             {
-                HttpClient client = new HttpClient();
-
                 string json = await client.GetStringAsync(
                     "https://localhost:7181/api/Kullanici/Listele");
 
@@ -116,38 +177,8 @@ namespace NetworkMonitoringWF.Forms
                 dgvKullanicilar.DataSource = null;
                 dgvKullanicilar.DataSource = kullanicilar;
 
-                dgvKullanicilar.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-                dgvKullanicilar.AllowUserToAddRows = false;
-                dgvKullanicilar.ReadOnly = true;
-                dgvKullanicilar.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                dgvKullanicilar.MultiSelect = false;
-
-                if (dgvKullanicilar.Columns.Contains("Id"))
-                {
-                    dgvKullanicilar.Columns["Id"].Visible = true;
-                    dgvKullanicilar.Columns["Id"].HeaderText = "ID";
-                    dgvKullanicilar.Columns["Id"].DisplayIndex = 0;
-                    dgvKullanicilar.Columns["Id"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
-                    dgvKullanicilar.Columns["Id"].Width = 60;
-                }
-
-                if (dgvKullanicilar.Columns.Contains("KullaniciAdi"))
-                {
-                    dgvKullanicilar.Columns["KullaniciAdi"].HeaderText = "Kullanıcı Adı";
-                    dgvKullanicilar.Columns["KullaniciAdi"].DisplayIndex = 1;
-                }
-
-                if (dgvKullanicilar.Columns.Contains("Sifre"))
-                {
-                    dgvKullanicilar.Columns["Sifre"].HeaderText = "Şifre";
-                    dgvKullanicilar.Columns["Sifre"].DisplayIndex = 2;
-                }
-
-                if (dgvKullanicilar.Columns.Contains("Rol"))
-                {
-                    dgvKullanicilar.Columns["Rol"].HeaderText = "Rol";
-                    dgvKullanicilar.Columns["Rol"].DisplayIndex = 3;
-                }
+                GridGenelAyarlar();
+                KolonlariAyarla();
             }
             catch (Exception ex)
             {
@@ -187,28 +218,11 @@ namespace NetworkMonitoringWF.Forms
 
         private async void btnEkle_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtKullaniciAdi.Text))
-            {
-                MessageBox.Show("Kullanıcı adı boş olamaz.");
+            if (!FormKontrolEt())
                 return;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtSifre.Text))
-            {
-                MessageBox.Show("Şifre boş olamaz.");
-                return;
-            }
-
-            if (cmbRol.SelectedItem == null)
-            {
-                MessageBox.Show("Lütfen rol seçiniz.");
-                return;
-            }
 
             try
             {
-                HttpClient client = new HttpClient();
-
                 var kullanici = new
                 {
                     Id = 0,
@@ -254,28 +268,11 @@ namespace NetworkMonitoringWF.Forms
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(txtKullaniciAdi.Text))
-            {
-                MessageBox.Show("Kullanıcı adı boş olamaz.");
+            if (!FormKontrolEt())
                 return;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtSifre.Text))
-            {
-                MessageBox.Show("Şifre boş olamaz.");
-                return;
-            }
-
-            if (cmbRol.SelectedItem == null)
-            {
-                MessageBox.Show("Lütfen rol seçiniz.");
-                return;
-            }
 
             try
             {
-                HttpClient client = new HttpClient();
-
                 var kullanici = new
                 {
                     Id = seciliKullaniciId,
@@ -332,8 +329,6 @@ namespace NetworkMonitoringWF.Forms
 
             try
             {
-                HttpClient client = new HttpClient();
-
                 HttpResponseMessage response = await client.DeleteAsync(
                     "https://localhost:7181/api/Kullanici/Sil/" + seciliKullaniciId);
 

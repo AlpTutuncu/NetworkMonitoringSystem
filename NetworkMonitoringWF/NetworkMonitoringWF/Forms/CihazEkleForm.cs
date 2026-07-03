@@ -4,12 +4,15 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace NetworkMonitoringWF
 {
     public partial class CihazEkleForm : Form
     {
+        private readonly HttpClient client = new HttpClient();
+
         public CihazEkleForm()
         {
             InitializeComponent();
@@ -24,70 +27,113 @@ namespace NetworkMonitoringWF
             await VlanlariYukle();
         }
 
-        private async System.Threading.Tasks.Task VlanlariYukle()
+        private async Task VlanlariYukle()
         {
-            HttpClient client = new HttpClient();
-
-            string json = await client.GetStringAsync(
-                "https://localhost:7181/api/Vlan/Listele");
-
-            List<VlanModel> vlanlar =
-                JsonConvert.DeserializeObject<List<VlanModel>>(json);
-
-            vlanlar.Insert(0, new VlanModel
+            try
             {
-                Id = 0,
-                VlanNo = 0,
-                VlanAdi = "VLAN Seçilmedi",
-                Konum = ""
-            });
+                string json = await client.GetStringAsync(
+                    "https://localhost:7181/api/Vlan/Listele");
 
-            cmbVlan.DataSource = vlanlar;
+                List<VlanModel> vlanlar =
+                    JsonConvert.DeserializeObject<List<VlanModel>>(json);
+
+                vlanlar.Insert(0, new VlanModel
+                {
+                    Id = 0,
+                    VlanNo = 0,
+                    VlanAdi = "VLAN Seçilmedi",
+                    Konum = ""
+                });
+
+                cmbVlan.DataSource = null;
+                cmbVlan.DataSource = vlanlar;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("VLAN bilgileri yüklenemedi: " + ex.Message);
+            }
         }
 
         private async void btnKaydet_Click(object sender, EventArgs e)
         {
-            HttpClient client = new HttpClient();
+            if (!FormKontrolEt())
+                return;
 
-            VlanModel secilenVlan = cmbVlan.SelectedItem as VlanModel;
-
-            int? secilenVlanId = null;
-
-            if (secilenVlan != null && secilenVlan.Id != 0)
+            try
             {
-                secilenVlanId = secilenVlan.Id;
+                VlanModel secilenVlan = cmbVlan.SelectedItem as VlanModel;
+
+                int? secilenVlanId = null;
+
+                if (secilenVlan != null && secilenVlan.Id != 0)
+                {
+                    secilenVlanId = secilenVlan.Id;
+                }
+
+                var cihaz = new
+                {
+                    CihazAdi = txtCihazAdi.Text.Trim(),
+                    IPAdresi = txtIPAdresi.Text.Trim(),
+                    CihazTipi = txtCihazTipi.Text.Trim(),
+                    Konum = txtKonum.Text.Trim(),
+                    VlanId = secilenVlanId
+                };
+
+                string json = JsonConvert.SerializeObject(cihaz);
+
+                StringContent content = new StringContent(
+                    json,
+                    Encoding.UTF8,
+                    "application/json");
+
+                HttpResponseMessage response = await client.PostAsync(
+                    "https://localhost:7181/api/Cihaz/CihazEkle",
+                    content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Cihaz eklendi.");
+                    this.Close();
+                }
+                else
+                {
+                    string hata = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show("Cihaz eklenemedi: " + hata);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Cihaz ekleme sırasında hata oluştu: " + ex.Message);
+            }
+        }
+
+        private bool FormKontrolEt()
+        {
+            if (string.IsNullOrWhiteSpace(txtCihazAdi.Text))
+            {
+                MessageBox.Show("Cihaz adı boş olamaz.");
+                return false;
             }
 
-            var cihaz = new
+            if (string.IsNullOrWhiteSpace(txtIPAdresi.Text))
             {
-                CihazAdi = txtCihazAdi.Text.Trim(),
-                IPAdresi = txtIPAdresi.Text.Trim(),
-                CihazTipi = txtCihazTipi.Text.Trim(),
-                Konum = txtKonum.Text.Trim(),
-                VlanId = secilenVlanId
-            };
-
-            string json = JsonConvert.SerializeObject(cihaz);
-
-            StringContent content = new StringContent(
-                json,
-                Encoding.UTF8,
-                "application/json");
-
-            HttpResponseMessage response = await client.PostAsync(
-                "https://localhost:7181/api/Cihaz/CihazEkle",
-                content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                MessageBox.Show("Cihaz eklendi.");
-                this.Close();
+                MessageBox.Show("IP adresi boş olamaz.");
+                return false;
             }
-            else
+
+            if (string.IsNullOrWhiteSpace(txtCihazTipi.Text))
             {
-                string hata = await response.Content.ReadAsStringAsync();
-                MessageBox.Show("Cihaz eklenemedi: " + hata);
+                MessageBox.Show("Cihaz tipi boş olamaz.");
+                return false;
             }
+
+            if (string.IsNullOrWhiteSpace(txtKonum.Text))
+            {
+                MessageBox.Show("Konum boş olamaz.");
+                return false;
+            }
+
+            return true;
         }
 
         private void btnIptal_Click(object sender, EventArgs e)

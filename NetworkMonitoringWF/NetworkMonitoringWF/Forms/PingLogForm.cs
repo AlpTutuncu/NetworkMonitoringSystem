@@ -10,9 +10,12 @@ namespace NetworkMonitoringWF.Forms
 {
     public partial class PingLogForm : Form
     {
+        private readonly HttpClient client = new HttpClient();
+
         public PingLogForm()
         {
             InitializeComponent();
+
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -25,22 +28,26 @@ namespace NetworkMonitoringWF.Forms
 
         private async Task PingLogListele()
         {
-            HttpClient client = new HttpClient();
+            try
+            {
+                string json = await client.GetStringAsync(
+                    "https://localhost:7181/api/PingLog/Listele");
 
-            string json = await client.GetStringAsync(
-                "https://localhost:7181/api/PingLog/Listele");
+                List<PingLogModel> loglar =
+                    JsonConvert.DeserializeObject<List<PingLogModel>>(json);
 
-            List<PingLogModel> loglar =
-                JsonConvert.DeserializeObject<List<PingLogModel>>(json);
+                dgvPingLog.DataSource = null;
+                dgvPingLog.DataSource = loglar;
 
-            dgvPingLog.DataSource = loglar;
-            dgvPingLog.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvPingLog.AllowUserToAddRows = false;
-            dgvPingLog.ReadOnly = true;
-
-            GridGenelAyarlar();
-            KolonBasliklariniAyarla();
-            KolonSirasiAyarla();
+                GridGenelAyarlar();
+                KolonBasliklariniAyarla();
+                KolonSirasiAyarla();
+                KolonGenislikleriniAyarla();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ping kayıtları listelenemedi: " + ex.Message);
+            }
         }
 
         private void GridGenelAyarlar()
@@ -57,7 +64,6 @@ namespace NetworkMonitoringWF.Forms
                 DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
             dgvPingLog.ColumnHeadersHeight = 45;
-
             dgvPingLog.RowTemplate.Height = 38;
 
             foreach (DataGridViewRow row in dgvPingLog.Rows)
@@ -105,6 +111,17 @@ namespace NetworkMonitoringWF.Forms
 
             if (dgvPingLog.Columns.Contains("KontrolTarihi"))
                 dgvPingLog.Columns["KontrolTarihi"].DisplayIndex = index++;
+        }
+
+        private void KolonGenislikleriniAyarla()
+        {
+            if (dgvPingLog.Columns.Contains("Id"))
+            {
+                dgvPingLog.Columns["Id"].AutoSizeMode =
+                    DataGridViewAutoSizeColumnMode.None;
+
+                dgvPingLog.Columns["Id"].Width = 70;
+            }
         }
 
         private void btnGeri_Click(object sender, EventArgs e)

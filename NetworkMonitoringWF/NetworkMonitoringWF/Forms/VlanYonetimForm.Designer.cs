@@ -290,7 +290,6 @@
             this.lblRenkE.Size = new System.Drawing.Size(98, 23);
             this.lblRenkE.TabIndex = 1;
             this.lblRenkE.Text = "Renk Etiketi";
-            this.lblRenkE.Click += new System.EventHandler(this.label4_Click);
             // 
             // lblGatewayy
             // 

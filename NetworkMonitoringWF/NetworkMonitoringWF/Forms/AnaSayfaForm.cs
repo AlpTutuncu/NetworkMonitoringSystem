@@ -48,102 +48,29 @@ namespace NetworkMonitoringWF
             // Sayfa açılır açılmaz bir kere kontrol etsin.
             await AlarmKontrolEt();
 
-            KoseYuvarlat(pnlCihazYonetimi, 18);
-
-            KartHoverAyarla(
-            pnlCihazYonetimi,
-            ColorTranslator.FromHtml("#ffffff"),
-            ColorTranslator.FromHtml("#edc6a6"),
-            ColorTranslator.FromHtml("#edc6a6"));
-
-            KartKoseVeBorderAyarla(
-            pnlCihazYonetimi,
-            18,
-            ColorTranslator.FromHtml("#FF7F50"));
-
-            KartClickAyarla(
-            pnlCihazYonetimi,
-            pnlCihazYonetimi_Click);
-
-            KartHoverAyarla(
-            pnlSistemKayitlari,
-            ColorTranslator.FromHtml("#ffffff"),
-            ColorTranslator.FromHtml("#edc6a6"),
-            ColorTranslator.FromHtml("#edc6a6"));
-
-            KartKoseVeBorderAyarla(
-            pnlSistemKayitlari,
-            18,
-            ColorTranslator.FromHtml("#FF7F50"));
-
-            KartClickAyarla(
-            pnlSistemKayitlari,
-            pnlSistemKayitlari_Click);
-
-            KartHoverAyarla(
-            pnlTopoloji,
-            ColorTranslator.FromHtml("#ffffff"),
-            ColorTranslator.FromHtml("#edc6a6"),
-            ColorTranslator.FromHtml("#edc6a6"));
-
-            KartKoseVeBorderAyarla(
-            pnlTopoloji,
-            18,
-            ColorTranslator.FromHtml("#FF7F50"));
-
-            KartClickAyarla(
-            pnlTopoloji,
-            pnlTopoloji_Click);
-
-            KartHoverAyarla(
-            pnlDashboard,
-            ColorTranslator.FromHtml("#ffffff"),
-            ColorTranslator.FromHtml("#edc6a6"),
-            ColorTranslator.FromHtml("#edc6a6"));
-
-            KartKoseVeBorderAyarla(
-            pnlDashboard,
-            18,
-            ColorTranslator.FromHtml("#FF7F50"));
-
-            KartClickAyarla(
-            pnlDashboard,
-            pnlDashboard_Click);
-
-            KartHoverAyarla(
-            pnlPingKayitlari,
-            ColorTranslator.FromHtml("#ffffff"),
-            ColorTranslator.FromHtml("#edc6a6"),
-            ColorTranslator.FromHtml("#edc6a6"));
-
-            KartKoseVeBorderAyarla(
-            pnlPingKayitlari,
-            18,
-            ColorTranslator.FromHtml("#FF7F50"));
-
-            KartClickAyarla(
-            pnlPingKayitlari,
-            pnlPingKayitlari_Click);
-
-            KartHoverAyarla(
-            pnlVlanYonetimi,
-            ColorTranslator.FromHtml("#ffffff"),
-            ColorTranslator.FromHtml("#edc6a6"),
-            ColorTranslator.FromHtml("#edc6a6"));
-
-            KartKoseVeBorderAyarla(
-            pnlVlanYonetimi,
-            18,
-            ColorTranslator.FromHtml("#FF7F50"));
-
-            KartClickAyarla(
-            pnlVlanYonetimi,
-            pnlVlanYonetimi_Click);
+            KartAyarla(pnlCihazYonetimi, pnlCihazYonetimi_Click);
+            KartAyarla(pnlSistemKayitlari, pnlSistemKayitlari_Click);
+            KartAyarla(pnlTopoloji, pnlTopoloji_Click);
+            KartAyarla(pnlDashboard, pnlDashboard_Click);
+            KartAyarla(pnlPingKayitlari, pnlPingKayitlari_Click);
+            KartAyarla(pnlVlanYonetimi, pnlVlanYonetimi_Click);
 
             KartKoseVeBorderAyarla(
             pnlAlarm,
             18,
             ColorTranslator.FromHtml("#FF7F50"));
+        }
+
+        private void KartAyarla(Control kart, EventHandler clickEvent)
+        {
+            Color normal = ColorTranslator.FromHtml("#ffffff");
+            Color hover = ColorTranslator.FromHtml("#edc6a6");
+            Color click = ColorTranslator.FromHtml("#edc6a6");
+            Color border = ColorTranslator.FromHtml("#FF7F50");
+
+            KartHoverAyarla(kart, normal, hover, click);
+            KartKoseVeBorderAyarla(kart, 18, border);
+            KartClickAyarla(kart, clickEvent);
         }
 
         private void KartKoseVeBorderAyarla(Control kart, int radius, Color borderColor)
@@ -195,25 +122,6 @@ namespace NetworkMonitoringWF
             form.ShowDialog();
 
             this.Show();
-        }
-
-        private void KoseYuvarlat(Control control, int radius)
-        {
-            if (control.Width <= 0 || control.Height <= 0)
-                return;
-
-            GraphicsPath path = new GraphicsPath();
-
-            Rectangle rect = new Rectangle(0, 0, control.Width, control.Height);
-
-            path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
-            path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90);
-            path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90);
-            path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
-
-            path.CloseFigure();
-
-            control.Region = new Region(path);
         }
 
         private void KartHoverAyarla(Control kart, Color normalRenk, Color hoverRenk, Color tiklamaRenk)
@@ -386,18 +294,6 @@ namespace NetworkMonitoringWF
             this.Close();
         }
 
-        private void btnCihazYonetimi_Click(object sender, EventArgs e)
-        {
-            CihazYonetimForm form = new CihazYonetimForm(kullaniciRol);
-            form.Show();
-        }
-
-        private void btnLoglar_Click(object sender, EventArgs e)
-        {
-            LogForm form = new LogForm();
-            form.Show();
-        }
-
         private async Task ServisDurumunuGetir()
         {
             HttpClient client = new HttpClient();
@@ -469,30 +365,6 @@ namespace NetworkMonitoringWF
             await ServisDurumunuGetir();
         }
 
-        private void btnDashboard_Click(object sender, EventArgs e)
-        {
-            DashboardForm form = new DashboardForm();
-            form.Show();
-        }
-
-        private void btnTopoloji_Click(object sender, EventArgs e)
-        {
-            TopolojiForm form = new TopolojiForm(kullaniciRol);
-            form.Show();
-        }
-
-        private void btnPingLog_Click(object sender, EventArgs e)
-        {
-            PingLogForm form = new PingLogForm();
-            form.Show();
-        }
-
-        private void btnVlanYonetimi_Click(object sender, EventArgs e)
-        {
-            VlanYonetimForm form = new VlanYonetimForm(kullaniciRol);
-            form.Show();
-        }
-
         private void btnKullaniciYonetimi_Click(object sender, EventArgs e)
         {
             FormAc(new KullaniciYonetimForm());
@@ -501,16 +373,6 @@ namespace NetworkMonitoringWF
         private void pnlCihazYonetimi_Click(object sender, EventArgs e)
         {
             FormAc(new CihazYonetimForm(kullaniciRol));
-        }
-
-        private void pnlCihazYonetimi_MouseEnter(object sender, EventArgs e)
-        {
-            pnlCihazYonetimi.BackColor = Color.FromArgb(220, 235, 255);
-        }
-
-        private void pnlCihazYonetimi_MouseLeave(object sender, EventArgs e)
-        {
-            pnlCihazYonetimi.BackColor = Color.FromArgb(235, 245, 255);
         }
 
         private void pnlSistemKayitlari_Click(object sender, EventArgs e)
@@ -549,5 +411,13 @@ namespace NetworkMonitoringWF
         {
             FormAc(new VlanYonetimForm(kullaniciRol));
         }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            alarmTimer.Stop();
+            alarmTimer.Dispose();
+            base.OnFormClosing(e);
+        }
+
     }
 }

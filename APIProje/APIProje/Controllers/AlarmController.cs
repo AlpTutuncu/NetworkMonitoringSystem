@@ -8,7 +8,7 @@ namespace APIProje.Controllers
     [ApiController]
     public class AlarmController : ControllerBase
     {
-        string connStr =
+        private readonly string connStr =
             @"Server=.\SQLEXPRESS;Database=APIProjeDB;Trusted_Connection=True;TrustServerCertificate=True;";
 
         [HttpGet("SonOkunmamis")]
@@ -27,7 +27,7 @@ namespace APIProje.Controllers
                       ORDER BY Tarih DESC",
                     baglanti);
 
-                SqlDataReader reader = komut.ExecuteReader();
+                using SqlDataReader reader = komut.ExecuteReader();
 
                 if (!reader.Read())
                     return Ok(null);
@@ -68,7 +68,11 @@ namespace APIProje.Controllers
                     baglanti);
 
                 komut.Parameters.AddWithValue("@id", id);
-                komut.ExecuteNonQuery();
+
+                int etkilenenSatir = komut.ExecuteNonQuery();
+
+                if (etkilenenSatir == 0)
+                    return NotFound("Alarm kaydı bulunamadı.");
 
                 return Ok("Alarm okundu olarak işaretlendi.");
             }

@@ -10,9 +10,12 @@ namespace NetworkMonitoringWF
 {
     public partial class LogForm : Form
     {
+        private readonly HttpClient client = new HttpClient();
+
         public LogForm()
         {
             InitializeComponent();
+
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -25,21 +28,26 @@ namespace NetworkMonitoringWF
 
         private async Task LogListele()
         {
-            HttpClient client = new HttpClient();
+            try
+            {
+                string json = await client.GetStringAsync(
+                    "https://localhost:7181/api/Log/LogListele");
 
-            string json = await client.GetStringAsync(
-                "https://localhost:7181/api/Log/LogListele");
+                List<IslemLogModel> loglar =
+                    JsonConvert.DeserializeObject<List<IslemLogModel>>(json);
 
-            List<IslemLogModel> loglar =
-                JsonConvert.DeserializeObject<List<IslemLogModel>>(json);
+                dataGridView1.DataSource = null;
+                dataGridView1.DataSource = loglar;
 
-            dataGridView1.DataSource = loglar;
-            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridView1.AllowUserToAddRows = false;
-
-            GridGenelAyarlar();
-            KolonBasliklariniAyarla();
-            KolonSirasiAyarla();
+                GridGenelAyarlar();
+                KolonBasliklariniAyarla();
+                KolonSirasiAyarla();
+                KolonGenislikleriniAyarla();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Sistem kayıtları listelenemedi: " + ex.Message);
+            }
         }
 
         private void GridGenelAyarlar()
@@ -56,7 +64,6 @@ namespace NetworkMonitoringWF
                 DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
             dataGridView1.ColumnHeadersHeight = 45;
-
             dataGridView1.RowTemplate.Height = 38;
 
             foreach (DataGridViewRow row in dataGridView1.Rows)
@@ -95,6 +102,17 @@ namespace NetworkMonitoringWF
 
             if (dataGridView1.Columns.Contains("Tarih"))
                 dataGridView1.Columns["Tarih"].DisplayIndex = index++;
+        }
+
+        private void KolonGenislikleriniAyarla()
+        {
+            if (dataGridView1.Columns.Contains("Id"))
+            {
+                dataGridView1.Columns["Id"].AutoSizeMode =
+                    DataGridViewAutoSizeColumnMode.None;
+
+                dataGridView1.Columns["Id"].Width = 70;
+            }
         }
 
         private void btnGeri_Click(object sender, EventArgs e)

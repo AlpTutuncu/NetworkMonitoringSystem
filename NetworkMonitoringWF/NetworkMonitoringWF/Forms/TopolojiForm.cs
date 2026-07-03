@@ -13,6 +13,7 @@ namespace NetworkMonitoringWF.Forms
 {
     public partial class TopolojiForm : Form
     {
+        private readonly HttpClient client = new HttpClient();
         private TopolojiResponseModel topoloji;
         private ToolTip nodeToolTip = new ToolTip();
         private int sonTooltipNodeId = -1;
@@ -25,28 +26,21 @@ namespace NetworkMonitoringWF.Forms
         public TopolojiForm()
         {
             InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-
             kullaniciRol = "Admin";
-
-            this.StartPosition = FormStartPosition.CenterScreen;
-
-            panelTopoloji.MouseMove += panelTopoloji_MouseMove;
-            panelTopoloji.MouseDown += panelTopoloji_MouseDown;
-            panelTopoloji.MouseMove += panelTopoloji_MouseMove_Drag;
-            panelTopoloji.MouseUp += panelTopoloji_MouseUp;
-            panelTopoloji.MouseClick += panelTopoloji_MouseClick;
+            FormAyarla();
         }
 
         public TopolojiForm(string rol)
         {
             InitializeComponent();
+            kullaniciRol = rol;
+            FormAyarla();
+        }
+
+        private void FormAyarla()
+        {
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
-
-            kullaniciRol = rol;
-
             this.StartPosition = FormStartPosition.CenterScreen;
 
             panelTopoloji.MouseMove += panelTopoloji_MouseMove;
@@ -80,7 +74,6 @@ namespace NetworkMonitoringWF.Forms
                 }
             }
         }
-
 
         private void panelTopoloji_MouseDown(object sender, MouseEventArgs e)
         {
@@ -141,12 +134,10 @@ namespace NetworkMonitoringWF.Forms
 
         private async void panelTopoloji_MouseUp(object sender, MouseEventArgs e)
         {
-            if (seciliNode == null)
+            if (!surukleniyor || seciliNode == null)
                 return;
 
             surukleniyor = false;
-
-            HttpClient client = new HttpClient();
 
             var data = new
             {
@@ -235,7 +226,6 @@ namespace NetworkMonitoringWF.Forms
             RolYetkileriniUygula();
             cmbKonum.SelectedIndex = 0;
             await TopolojiGetir();
-           
         }
 
         private void NodelariPanelIcindeTut()
@@ -282,8 +272,6 @@ namespace NetworkMonitoringWF.Forms
             if (sagTiklananNode == null)
                 return;
 
-            HttpClient client = new HttpClient();
-
             HttpResponseMessage response =
                 await client.PostAsync(
                     $"https://localhost:7181/api/Ping/TekPing/{sagTiklananNode.Id}",
@@ -313,18 +301,24 @@ namespace NetworkMonitoringWF.Forms
 
         private async Task TopolojiGetir()
         {
-            HttpClient client = new HttpClient();
+            try
+            {
+                string konum = cmbKonum.Text;
 
-            string konum = cmbKonum.Text;
+                string json = await client.GetStringAsync(
+                    "https://localhost:7181/api/Topoloji/Konum/" +
+                    Uri.EscapeDataString(konum));
 
-            string json = await client.GetStringAsync(
-                "https://localhost:7181/api/Topoloji/Konum/" + konum);
+                topoloji = JsonConvert.DeserializeObject<TopolojiResponseModel>(json);
 
-            topoloji = JsonConvert.DeserializeObject<TopolojiResponseModel>(json);
+                NodelariPanelIcindeTut();
 
-            NodelariPanelIcindeTut();
-
-            panelTopoloji.Invalidate();
+                panelTopoloji.Invalidate();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Topoloji verileri alınamadı: " + ex.Message);
+            }
         }
 
         private void panelTopoloji_Paint(object sender, PaintEventArgs e)
@@ -344,12 +338,15 @@ namespace NetworkMonitoringWF.Forms
                 if (from == null || to == null)
                     continue;
 
-                g.DrawLine(
-                    new Pen(Color.Gray, 2),
-                    (float)from.PosX,
-                    (float)from.PosY,
-                    (float)to.PosX,
-                    (float)to.PosY);
+                using (Pen pen = new Pen(Color.Gray, 2))
+                {
+                    g.DrawLine(
+                        pen,
+                        (float)from.PosX,
+                        (float)from.PosY,
+                        (float)to.PosX,
+                        (float)to.PosY);
+                }
             }
 
             // Node çizimleri
@@ -394,11 +391,6 @@ namespace NetworkMonitoringWF.Forms
         private void btnGeri_Click(object sender, EventArgs e)
         {
             this.Close();
-        }
-
-        private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-
         }
 
         private void tsmDetay_Click(object sender, EventArgs e)
@@ -448,8 +440,6 @@ namespace NetworkMonitoringWF.Forms
             if (cevap != DialogResult.Yes)
                 return;
 
-            HttpClient client = new HttpClient();
-
             HttpResponseMessage response = await client.DeleteAsync(
                 "https://localhost:7181/api/Cihaz/CihazSil/" + sagTiklananNode.Id);
 
@@ -486,8 +476,6 @@ namespace NetworkMonitoringWF.Forms
                 baglantiBaslatilanNode = null;
                 return;
             }
-
-            HttpClient client = new HttpClient();
 
             var data = new
             {
@@ -535,8 +523,6 @@ namespace NetworkMonitoringWF.Forms
 
                 return;
             }
-
-            HttpClient client = new HttpClient();
 
             HttpResponseMessage response = await client.DeleteAsync(
                 "https://localhost:7181/api/Topoloji/BaglantiSil/" +

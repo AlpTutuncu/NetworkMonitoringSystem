@@ -9,12 +9,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
-using System.Collections.Generic;
 
 namespace NetworkMonitoringWF.Forms
 {
     public partial class DashboardForm : Form
     {
+        private readonly HttpClient client = new HttpClient();
+
         public DashboardForm()
         {
             InitializeComponent();
@@ -27,51 +28,8 @@ namespace NetworkMonitoringWF.Forms
         private async void DashboardForm_Load(object sender, EventArgs e)
         {
             await DashboardGetir();
-
             PanelleriYuvarlat();
-
-            pnlToplam.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlToplam, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
-            pnlAktif.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlAktif, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
-            pnlPasif.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlPasif, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
-            pnlBil.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlBil, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
-            pnlServisDurum.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlServisDurum, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
-            pnlGraph.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlGraph, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
-            pnlGraph2.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlGraph2, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
-            pnlSon.Resize += (s, ev) => PanelKoseVeBorderAyarla(pnlSon, 20, ColorTranslator.FromHtml("#FDBA74"), 1);
-
         }
-
-        //private void CihazTipiGrafikDoldur(DashboardModel model)
-        //{
-        //    chartCihazTipi.Series.Clear();
-        //    chartCihazTipi.ChartAreas.Clear();
-        //    chartCihazTipi.Titles.Clear();
-
-        //    ChartArea alan = new ChartArea("CihazTipiChart");
-        //    chartCihazTipi.ChartAreas.Add(alan);
-
-        //    Series seri = new Series("Cihaz Tipleri");
-        //    seri.ChartType = SeriesChartType.Bar;
-
-        //    if (model.CihazTipDagilimi != null)
-        //    {
-        //        foreach (var item in model.CihazTipDagilimi)
-        //        {
-        //            int pointIndex = seri.Points.AddY(item.Adet);
-        //            seri.Points[pointIndex].AxisLabel = item.CihazTipi;
-        //            seri.Points[pointIndex].Label = item.Adet.ToString();
-        //        }
-        //    }
-
-        //    chartCihazTipi.Series.Add(seri);
-        //    chartCihazTipi.Titles.Add("Cihaz Tipine Göre Dağılım");
-
-        //    chartCihazTipi.Legends.Clear();
-
-        //    chartCihazTipi.ChartAreas[0].AxisX.Interval = 1;
-        //    chartCihazTipi.ChartAreas[0].AxisX.MajorGrid.Enabled = false;
-        //    chartCihazTipi.ChartAreas[0].AxisY.MajorGrid.Enabled = false;
-        //}
 
         private void CihazTipiGrafikDoldur(DashboardModel model)
         {
@@ -95,15 +53,15 @@ namespace NetworkMonitoringWF.Forms
             alan.ShadowOffset = 0;
 
             alan.InnerPlotPosition.Auto = false;
-            alan.InnerPlotPosition.X = 22;      // 2 → 22, sol tarafa cihaz adları için yer aç
+            alan.InnerPlotPosition.X = 22;      
             alan.InnerPlotPosition.Y = 2;
-            alan.InnerPlotPosition.Width = 60;  // 72 → 60, genişliği azalt
+            alan.InnerPlotPosition.Width = 60;  
             alan.InnerPlotPosition.Height = 92;
 
             // Y ekseni (cihaz adları)
             alan.AxisY.LabelStyle.Font = new Font("Segoe UI", 8.5f);
             alan.AxisY.LabelStyle.ForeColor = Color.FromArgb(100, 105, 125);
-            alan.AxisY.LabelStyle.Interval = 1;   // bunu ekle — her etiketi göster
+            alan.AxisY.LabelStyle.Interval = 1;   
             alan.AxisY.LineColor = Color.Transparent;
             alan.AxisY.MajorGrid.Enabled = false;
             alan.AxisY.MajorTickMark.Enabled = false;
@@ -122,18 +80,6 @@ namespace NetworkMonitoringWF.Forms
 
             chartCihazTipi.ChartAreas.Add(alan);
 
-            // ── Renk paleti ──────────────────────────────────────────────
-            var renkler = new[]
-            {
-        Color.FromArgb(42,  120, 214),
-        Color.FromArgb(74,  58,  167),
-        Color.FromArgb(237, 161, 0),
-        Color.FromArgb(27,  175, 122),
-        Color.FromArgb(0,   131, 0),
-        Color.FromArgb(227, 73,  72),
-        Color.FromArgb(137, 135, 129),
-    };
-
             // ── Seri ─────────────────────────────────────────────────────
             var seri = new Series("Cihaz Tipleri")
             {
@@ -145,7 +91,6 @@ namespace NetworkMonitoringWF.Forms
 
             if (model.CihazTipDagilimi != null)
             {
-                int i = 0;
                 foreach (var item in model.CihazTipDagilimi)
                 {
                     int idx = seri.Points.AddXY(item.CihazTipi, item.Adet);
@@ -170,8 +115,6 @@ namespace NetworkMonitoringWF.Forms
                     p.Label = item.Adet.ToString();
                     p.LabelForeColor = Color.FromArgb(25, 27, 40);
                     p.LabelFormat = "";
-
-                    i++;
                 }
             }
 
@@ -206,80 +149,57 @@ namespace NetworkMonitoringWF.Forms
                 lblServisDurum.ForeColor = Color.FromArgb(180, 50, 50);
                 lblServisDurum.Text = "Pasif";
             }
-
-            PanelKoseYuvarlat(pnlServisDurum, 20);
         }
 
         private void PanelKoseVeBorderAyarla(Control panel, int radius, Color borderColor, int borderWidth)
-{
-    if (panel.Width <= 0 || panel.Height <= 0)
-        return;
-
-    GraphicsPath regionPath = new GraphicsPath();
-
-    Rectangle regionRect = new Rectangle(0, 0, panel.Width, panel.Height);
-
-    regionPath.AddArc(regionRect.X, regionRect.Y, radius, radius, 180, 90);
-    regionPath.AddArc(regionRect.Right - radius, regionRect.Y, radius, radius, 270, 90);
-    regionPath.AddArc(regionRect.Right - radius, regionRect.Bottom - radius, radius, radius, 0, 90);
-    regionPath.AddArc(regionRect.X, regionRect.Bottom - radius, radius, radius, 90, 90);
-    regionPath.CloseFigure();
-
-    panel.Region = new Region(regionPath);
-
-    panel.Paint += (s, e) =>
-    {
-        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-        Rectangle borderRect = new Rectangle(
-            borderWidth / 2,
-            borderWidth / 2,
-            panel.Width - borderWidth - 1,
-            panel.Height - borderWidth - 1);
-
-        using (GraphicsPath borderPath = new GraphicsPath())
-        {
-            borderPath.AddArc(borderRect.X, borderRect.Y, radius, radius, 180, 90);
-            borderPath.AddArc(borderRect.Right - radius, borderRect.Y, radius, radius, 270, 90);
-            borderPath.AddArc(borderRect.Right - radius, borderRect.Bottom - radius, radius, radius, 0, 90);
-            borderPath.AddArc(borderRect.X, borderRect.Bottom - radius, radius, radius, 90, 90);
-            borderPath.CloseFigure();
-
-            using (Pen pen = new Pen(borderColor, borderWidth))
-            {
-                e.Graphics.DrawPath(pen, borderPath);
-            }
-        }
-    };
-
-    panel.Invalidate();
-}
-
-        private void PanelKoseYuvarlat(Control panel, int radius)
         {
             if (panel.Width <= 0 || panel.Height <= 0)
                 return;
 
-            GraphicsPath path = new GraphicsPath();
+            GraphicsPath regionPath = new GraphicsPath();
 
-            Rectangle rect = new Rectangle(0, 0, panel.Width, panel.Height);
+            Rectangle regionRect = new Rectangle(0, 0, panel.Width, panel.Height);
 
-            path.AddArc(rect.X, rect.Y, radius, radius, 180, 90);
-            path.AddArc(rect.Right - radius, rect.Y, radius, radius, 270, 90);
-            path.AddArc(rect.Right - radius, rect.Bottom - radius, radius, radius, 0, 90);
-            path.AddArc(rect.X, rect.Bottom - radius, radius, radius, 90, 90);
+            regionPath.AddArc(regionRect.X, regionRect.Y, radius, radius, 180, 90);
+            regionPath.AddArc(regionRect.Right - radius, regionRect.Y, radius, radius, 270, 90);
+            regionPath.AddArc(regionRect.Right - radius, regionRect.Bottom - radius, radius, radius, 0, 90);
+            regionPath.AddArc(regionRect.X, regionRect.Bottom - radius, radius, radius, 90, 90);
+            regionPath.CloseFigure();
 
-            path.CloseFigure();
+            panel.Region = new Region(regionPath);
 
-            panel.Region = new Region(path);
+            panel.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+                Rectangle borderRect = new Rectangle(
+                    borderWidth / 2,
+                    borderWidth / 2,
+                    panel.Width - borderWidth - 1,
+                    panel.Height - borderWidth - 1);
+
+                using (GraphicsPath borderPath = new GraphicsPath())
+                {
+                    borderPath.AddArc(borderRect.X, borderRect.Y, radius, radius, 180, 90);
+                    borderPath.AddArc(borderRect.Right - radius, borderRect.Y, radius, radius, 270, 90);
+                    borderPath.AddArc(borderRect.Right - radius, borderRect.Bottom - radius, radius, radius, 0, 90);
+                    borderPath.AddArc(borderRect.X, borderRect.Bottom - radius, radius, radius, 90, 90);
+                    borderPath.CloseFigure();
+
+                    using (Pen pen = new Pen(borderColor, borderWidth))
+                    {
+                        e.Graphics.DrawPath(pen, borderPath);
+                    }
+                }
+            };
+
+            panel.Invalidate();
         }
 
         private async Task DashboardGetir()
         {
             try
             {
-                HttpClient client = new HttpClient();
-
                 string json = await client.GetStringAsync(
                     "https://localhost:7181/api/Dashboard/Ozet");
 
@@ -352,10 +272,8 @@ namespace NetworkMonitoringWF.Forms
         {
             try
             {
-                HttpClient client = new HttpClient();
-
                 string json = await client.GetStringAsync(
-                    "https://localhost:7181/api/Rapor/Ozet");
+                "https://localhost:7181/api/Rapor/Ozet");
 
                 RaporModel rapor =
                     JsonConvert.DeserializeObject<RaporModel>(json);
@@ -438,11 +356,6 @@ namespace NetworkMonitoringWF.Forms
             {
                 MessageBox.Show("Rapor oluşturulurken hata oluştu: " + ex.Message);
             }
-        }
-
-        private void lblServisDurum_Click(object sender, EventArgs e)
-        {
-
         }
     }
 }

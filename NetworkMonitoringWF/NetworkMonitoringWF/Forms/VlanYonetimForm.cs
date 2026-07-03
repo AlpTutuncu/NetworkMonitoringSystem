@@ -12,6 +12,7 @@ namespace NetworkMonitoringWF.Forms
 {
     public partial class VlanYonetimForm : Form
     {
+        private readonly HttpClient client = new HttpClient();
         private List<VlanModel> vlanListesi = new List<VlanModel>();
         private VlanModel seciliVlan = null;
         private string kullaniciRol;
@@ -19,33 +20,14 @@ namespace NetworkMonitoringWF.Forms
         public VlanYonetimForm(string rol)
         {
             InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-
-            dataGridView1.CellClick -= dataGridView1_CellClick;
-            dataGridView1.CellClick += dataGridView1_CellClick;
-
-            dataGridView1.SelectionChanged -= dataGridView1_SelectionChanged;
-            dataGridView1.SelectionChanged += dataGridView1_SelectionChanged;
-
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.Text = "VLAN Yönetimi";
+            FormAyarla();
             kullaniciRol = rol;
         }
 
         public VlanYonetimForm()
         {
             InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-
-            dataGridView1.CellClick -= dataGridView1_CellClick;
-            dataGridView1.CellClick += dataGridView1_CellClick;
-
-            dataGridView1.SelectionChanged -= dataGridView1_SelectionChanged;
-            dataGridView1.SelectionChanged += dataGridView1_SelectionChanged;
-
-            this.StartPosition = FormStartPosition.CenterScreen;
+            FormAyarla();
             kullaniciRol = "Admin";
         }
 
@@ -64,6 +46,20 @@ namespace NetworkMonitoringWF.Forms
                 btnGuncelle.Enabled = false;
                 btnSil.Enabled = false;
             }
+        }
+
+        private void FormAyarla()
+        {
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.Text = "VLAN Yönetimi";
+
+            dataGridView1.CellClick -= dataGridView1_CellClick;
+            dataGridView1.CellClick += dataGridView1_CellClick;
+
+            dataGridView1.SelectionChanged -= dataGridView1_SelectionChanged;
+            dataGridView1.SelectionChanged += dataGridView1_SelectionChanged;
         }
 
         private void ButonStili(Button btn, Color arkaplan, Color yazi)
@@ -114,8 +110,6 @@ namespace NetworkMonitoringWF.Forms
 
             try
             {
-                HttpClient client = new HttpClient();
-
                 string json = await client.GetStringAsync(
                     "https://localhost:7181/api/Vlan/Konum/" +
                     Uri.EscapeDataString(konum));
@@ -152,8 +146,6 @@ namespace NetworkMonitoringWF.Forms
 
             try
             {
-                HttpClient client = new HttpClient();
-
                 string json = await client.GetStringAsync(
                     "https://localhost:7181/api/Vlan/Ara/" +
                     Uri.EscapeDataString(konum) + "/" +
@@ -163,8 +155,6 @@ namespace NetworkMonitoringWF.Forms
                     JsonConvert.DeserializeObject<List<VlanModel>>(json);
 
                 GridiDoldur(vlanListesi);
-
-                DetaylariTemizle();
             }
             catch (Exception ex)
             {
@@ -201,32 +191,6 @@ namespace NetworkMonitoringWF.Forms
                 }
 
                 seciliVlan = vlanlar[0];
-                DetayGoster(seciliVlan);
-            }
-            else
-            {
-                DetaylariTemizle();
-            }
-        }
-
-        private void IlkSatiriSec()
-        {
-            if (vlanListesi != null && vlanListesi.Count > 0 && dataGridView1.Rows.Count > 0)
-            {
-                dataGridView1.ClearSelection();
-
-                dataGridView1.Rows[0].Selected = true;
-
-                foreach (DataGridViewCell cell in dataGridView1.Rows[0].Cells)
-                {
-                    if (cell.Visible)
-                    {
-                        dataGridView1.CurrentCell = cell;
-                        break;
-                    }
-                }
-
-                seciliVlan = vlanListesi[0];
                 DetayGoster(seciliVlan);
             }
             else
@@ -474,8 +438,6 @@ namespace NetworkMonitoringWF.Forms
 
             try
             {
-                HttpClient client = new HttpClient();
-
                 HttpResponseMessage response = await client.DeleteAsync(
                     "https://localhost:7181/api/Vlan/Sil/" + seciliVlan.Id);
 
@@ -542,17 +504,5 @@ namespace NetworkMonitoringWF.Forms
                 path.Dispose();
             };
         }
-
-        private void label4_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        
     }
 }

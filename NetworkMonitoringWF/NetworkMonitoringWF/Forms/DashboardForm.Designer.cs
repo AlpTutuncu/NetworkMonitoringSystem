@@ -134,7 +134,6 @@
             this.lblServisDurum.Size = new System.Drawing.Size(77, 28);
             this.lblServisDurum.TabIndex = 4;
             this.lblServisDurum.Text = "Durum";
-            this.lblServisDurum.Click += new System.EventHandler(this.lblServisDurum_Click);
             // 
             // lblSonKontrol
             // 
